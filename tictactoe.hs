@@ -78,16 +78,42 @@ isOutOfBounds :: Int -> (Int, Int, Int) -> Bool
 isOutOfBounds size (x, y, z) = x < 1 || y < 1 || z < 1 || x > size || y > size || z > size
 
 
---TODO: Yes, I need to implement this function...
+--Desc: Apply a function to the element at the given index (very cool).
+--Arg1: Index to which the function is to be applied.
+--Arg2: The function.
+--Arg3: The input list.
+--Ret: Same list, but with the function applied at the i'th element.
+map_at :: Int -> (a -> a) -> [a] -> [a]
+map_at i f list = let (prevElems, target : remElems) = splitAt i list
+                  in prevElems ++ (f target : remElems)
+
+
+--Desc: Update element (x, y, z) of a three-dimensional array.
+--Arg1: (x,y,z) triplet whose value needs to be changed.
+--Arg2: The new value.
+--Arg3: Input 3D grid
+--Ret: New grid, where the value at (x,y,z) is set to Arg2.
+update3 :: (Int, Int, Int) -> a -> [[[a]]] -> [[[a]]]
+update3 (x, y, z) val grid = map_at x (map_at y (map_at z (const val))) grid
+
+
+--TODO: Not working as intended.
+--      What this function does VS the image of a 3D grid in my head are two different things.
+--      Must decide which lists represent which parts of the board, etc.
+--      Use `debug_show3Dgrid` to get an idea.
 --Arg1: A tictactoe triplet (x,y,z), where each coordinate is in the inclusive range [1, (length Arg2)].
 --Arg2: A character value: '-' or 'X' or 'O'.
 --Arg3: A 3D tictactoe board.
 --Ret: The new tictactoe board, where the board at the triplet's coordinates now contains Arg2's value.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
 setCell :: (Int, Int, Int) -> Char -> [[String]] -> [[String]]
-setCell (x, y, z) moveChar (face : remFaces) = [] -- TODO: My brain is fried...
+setCell (x, y, z) = update3 ((z - 1), (y - 1), (x - 1))
 
 
+--TODO: Not working as intended.
+--      What this function does VS the image of a 3D grid in my head are two different things.
+--      Must decide which lists represent which parts of the board, etc.
+--      Use `debug_show3Dgrid` to get an idea.
 --Arg1: A tictactoe triplet (x,y,z), where each coordinate is in the inclusive range [1, (length Arg2)].
 --Arg2: A 3D tictactoe board.
 --Ret: A char equal to '.' or 'X' or 'O'.
@@ -138,7 +164,7 @@ gameLoop board = do
              gameLoop board
          else if (isEmpty (x, y, z) board) == False then do
              putStrLn ""
-             putStrLn "You cannot make your move there."
+             putStrLn "You cannot make your move there (cell is not empty)."
              putStrLn ""
              gameLoop board
          else do
@@ -149,6 +175,11 @@ gameLoop board = do
                  boardComputerMoved = 
              -}
              putStrLn "TODO: Implement the main game loop plz."
-             gameLoop board
-         
-         
+             gameLoop (setCell (x, y, z) playerChar board) -- TODO: Edit this out. This was just for testing.
+
+
+debug_show3Dgrid = do
+        putStrLn ""
+        putStr (show [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["rst", "uvw", "xyz"]])
+        putStr "\n\n"
+        putStr (toStrBoard [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["rst", "uvw", "xyz"]])
