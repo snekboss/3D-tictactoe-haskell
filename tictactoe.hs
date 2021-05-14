@@ -119,14 +119,14 @@ run = do
 
 --Desc: The start of the game. Do your initialization stuff here.
 gameStart board = do
-        gameLoop 1 board
+        gameLoop board
 
 
 --Desc: Game loop. Godspeed.
 --Arg1: 1 for player1; 2 for player2.
 --Arg2: The current state of the game board.
 --Ret: Some monadic IO magic.
-gameLoop player board = do
+gameLoop board = do
          putStr (toStrBoard board)
          putStr "Your move (x y z)?: "
          (x, y, z) <- readLn :: IO (Int, Int, Int) -- TODO: I must type (x, y, z). Also, exception if bad input. What do?
@@ -135,12 +135,12 @@ gameLoop player board = do
              putStrLn "Your move is out of bounds."
              putStrLn ("Please fit your coordinates into the inclusive [1," ++ (show (length board)) ++ "] range.")
              putStrLn ""
-             gameLoop player board
+             gameLoop board
          else if (isEmpty (x, y, z) board) == False then do
              putStrLn ""
              putStrLn "You cannot make your move there."
              putStrLn ""
-             gameLoop player board
+             gameLoop board
          else do
              {-
              -- TODO: Write the main game loop plz. Win conditions, minimax, etc.
@@ -149,6 +149,6 @@ gameLoop player board = do
                  boardComputerMoved = 
              -}
              putStrLn "TODO: Implement the main game loop plz."
-             gameLoop (3 - player) board
+             gameLoop board
          
          
