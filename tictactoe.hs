@@ -114,7 +114,7 @@ run = do
             putStrLn "The size cannot be less than 3."
             return ()
         else do
-            gameStart (initBoard 3)
+            gameStart (initBoard dims)
 
 
 --Desc: The start of the game. Do your initialization stuff here.
