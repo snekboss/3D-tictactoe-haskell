@@ -1,4 +1,6 @@
 import Data.List
+import Data.Maybe
+import Text.Read
 
 {-
 
@@ -28,6 +30,9 @@ import Data.List
 emptyChar = '.'
 playerChar = 'X'
 computerChar = 'O'
+
+humanPlayer = 1
+computerPlayer = 2
 
 
 
@@ -97,7 +102,7 @@ update3 :: (Int, Int, Int) -> a -> [[[a]]] -> [[[a]]]
 update3 (x, y, z) val grid = map_at x (map_at y (map_at z (const val))) grid
 
 
---TODO: Not working as intended.
+--TODO: Might not working as intended (though, it COULD be working as intended...)
 --      What this function does VS the image of a 3D grid in my head are two different things.
 --      Must decide which lists represent which parts of the board, etc.
 --      Use `debug_show3Dgrid` to get an idea.
@@ -110,7 +115,7 @@ setCell :: (Int, Int, Int) -> Char -> [[String]] -> [[String]]
 setCell (x, y, z) = update3 ((z - 1), (y - 1), (x - 1))
 
 
---TODO: Not working as intended.
+--TODO: Might not working as intended (though, it COULD be working as intended...)
 --      What this function does VS the image of a 3D grid in my head are two different things.
 --      Must decide which lists represent which parts of the board, etc.
 --      Use `debug_show3Dgrid` to get an idea.
@@ -132,54 +137,123 @@ isEmpty triplet board = (getCell triplet board) == (emptyChar)
 
 
 -- ============================== Game loop, etc. ==============================
+
+--Asks the size of the board.
+--Returns an IO Int. Use the "<-" operator when working with this function.
+askBoardSize = do
+        putStr "Enter board size: "
+        input <- getLine
+        let dims = readMaybe input :: Maybe Int
+         in
+            if dims == Nothing then do
+                putStrLn "Invalid input."
+                askBoardSize
+            else if dims < (Just 3) then do
+                putStrLn "The size cannot be less than 3."
+                askBoardSize
+            else do
+                return (fromJust dims)
+
+
+--Asks the starting player (human or computer).
+--Returns an IO Int. Use the "<-" operator when working with this function.
+askStarterPlayer = do
+        putStrLn "Would you like to start first? (y/n)"
+        answer <- getLine
+        if answer == "y" || answer == "Y" then do
+            return humanPlayer
+        else if answer == "n" || answer == "N" then do
+            return computerPlayer
+        else do
+            putStrLn "Please enter 'y' or 'n'."
+            askStarterPlayer
+
+
 --Desc: This is how you start the game.
 run = do
-        putStr "Enter board size: "
-        dims <- readLn :: IO Int -- TODO: Exception if bad input. Yay or nay?
-        if dims < 3 then do
-            putStrLn "The size cannot be less than 3."
-            return ()
-        else do
-            gameStart (initBoard dims)
+    size <- askBoardSize
+    starter <- askStarterPlayer
+    gameStart starter (initBoard size)
 
 
---Desc: The start of the game. Do your initialization stuff here.
-gameStart board = do
-        gameLoop board
+--Desc: Do game initialization stuff here.
+gameStart player board = do
+        gameLoop player board
 
 
---Desc: Game loop. Godspeed.
---Arg1: 1 for player1; 2 for player2.
+--Asks the move triplet (x,y,z) of the player.
+--Returns an IO (Int, Int, Int) (probably). Use the "<-" operator when working with this function.
+getPlayerMove board = do
+        putStr "Your move (x y z)?: "
+        input <- getLine
+        let maybeNums = map readMaybe (words input) :: [Maybe Int]
+            in
+                if length maybeNums /= 3 || elem Nothing maybeNums then do
+                    putStrLn "Please enter 3 numbers."
+                    getPlayerMove board
+                else do
+                    let [x, y, z] = maybeNums
+                        triplet = (fromJust x, fromJust y, fromJust z)
+                        boardSize = length board
+                        in
+                            if isOutOfBounds boardSize triplet then do
+                                putStrLn ""
+                                putStrLn "Your move is out of bounds."
+                                putStrLn ("Please fit your coordinates into the inclusive [1," ++ (show boardSize) ++ "] range.")
+                                putStrLn ""
+                                getPlayerMove board
+                            else if (isEmpty triplet board) == False then do
+                                putStrLn ""
+                                putStrLn "You cannot make your move there (cell is not empty)."
+                                putStrLn ""
+                                getPlayerMove board
+                            else do
+                                return triplet
+
+
+--TODO: Implement computer AI.
+getComputerMove board = do
+    putStrLn "TODO: Computer moves at (1,2,3)."
+    return (1,2,3)
+
+
+--TODO: Check the winning conditions, etc.
+getOutcome board = 0 
+
+
+
+--Announces the winner (player if outcome == 1; computer if outcome == 2).
+--Returns an IO action which does things (probably).
+announceWinner outcome =
+    if outcome == 1 then do
+        putStrLn "You win!"
+    else do
+        putStrLn "You lose."
+
+
+--Desc: Game loop.
+--Arg1: 1 for player1 (human); 2 for player2 (computer).
 --Arg2: The current state of the game board.
 --Ret: Some monadic IO magic.
-gameLoop board = do
-         putStr (toStrBoard board)
-         putStr "Your move (x y z)?: "
-         (x, y, z) <- readLn :: IO (Int, Int, Int) -- TODO: I must type (x, y, z). Also, exception if bad input. What do?
-         if isOutOfBounds (length board) (x, y, z) then do
-             putStrLn ""
-             putStrLn "Your move is out of bounds."
-             putStrLn ("Please fit your coordinates into the inclusive [1," ++ (show (length board)) ++ "] range.")
-             putStrLn ""
-             gameLoop board
-         else if (isEmpty (x, y, z) board) == False then do
-             putStrLn ""
-             putStrLn "You cannot make your move there (cell is not empty)."
-             putStrLn ""
-             gameLoop board
-         else do
-             {-
-             -- TODO: Write the main game loop plz. Win conditions, minimax, etc.
-             let boardPlayerMoved = setCell (x, y, z) (playerChar) board
-                 
-                 boardComputerMoved = 
-             -}
-             putStrLn "TODO: Implement the main game loop plz."
-             gameLoop (setCell (x, y, z) playerChar board) -- TODO: Edit this out. This was just for testing.
+gameLoop player board = do
+         let outcome = getOutcome board
+             in
+                 if outcome == 0 then do
+                     putStr (toStrBoard board)
+                     if player == (humanPlayer) then do
+                         playerMove <- getPlayerMove board
+                         let newBoard = setCell playerMove playerChar board
+                             in gameLoop (3 - player) newBoard
+                     else do
+                         computerMove <- getComputerMove board
+                         let newBoard = setCell computerMove computerChar board
+                             in gameLoop (3 - player) newBoard
+                 else do
+                     announceWinner outcome
 
 
 debug_show3Dgrid = do
         putStrLn ""
-        putStr (show [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["rst", "uvw", "xyz"]])
+        putStr (show [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["stu", "vwx", "yz#"]])
         putStr "\n\n"
-        putStr (toStrBoard [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["rst", "uvw", "xyz"]])
+        putStr (toStrBoard [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["stu", "vwx", "yz#"]])
