@@ -1,31 +1,7 @@
 import Data.List
+import Data.Function
 import Data.Maybe
 import Text.Read
-
-{-
-
-[
-    [
-    "---",
-    "---",
-    "---"
-    ],
-    
-    [
-    "---",
-    "---",
-    "---"
-    ],
-    
-    [
-    "---",
-    "---",
-    "---"
-    ],
-]
-
--}
-
 
 emptyChar = '.'
 playerChar = 'X'
@@ -124,7 +100,7 @@ setCell (x, y, z) = update3 ((z - 1), (y - 1), (x - 1))
 --Ret: A char equal to '.' or 'X' or 'O'.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
 getCell :: (Int, Int, Int) -> [[String]] -> Char
-getCell (x, y, z) board = (( board !! (z - 1)) !! (y - 1)) !! (x - 1)
+getCell (x, y, z) board = board !! (z - 1) !! (y - 1) !! (x - 1)
 
 
 --Arg1: A tictactoe move triplet (x,y,z), where each coordinate is in the inclusive range [1, (length Arg2)].
@@ -133,6 +109,51 @@ getCell (x, y, z) board = (( board !! (z - 1)) !! (y - 1)) !! (x - 1)
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
 isEmpty :: (Int, Int, Int) -> [[String]] -> Bool
 isEmpty triplet board = (getCell triplet board) == (emptyChar)
+
+
+
+
+-- ============================== Extracting 2D boards out of the 3D board ==============================
+-- ******************** Common Helper Functions ********************
+--Arg1: The 3D board.
+--Ret: The same 3D board, however each 2D board is transposed.
+getEachTransposed :: [[String]] -> [[String]]
+getEachTransposed [] = []
+getEachTransposed (list : remLists) = transpose list : getEachTransposed remLists
+
+
+
+
+-- ******************** The functions that get me certain types of 2D boards out of *the* 3D Board. ********************
+--Arg1: The default 3D board of size NxNxN (same thing as getUpDownBoards).
+--Ret: A list of N 2D-boards (up-down), all of size NxN.
+getUpDownBoards :: [[String]] -> [[String]]
+getUpDownBoards board3D = board3D
+
+
+--Arg1: The default 3D board of size NxNxN (same thing as getUpDownBoards).
+--Ret: A list of N 2D-boards (back-forward), all of size NxN.
+getBackForwardBoards :: [[String]] -> [[String]]
+getBackForwardBoards board3D = transpose board3D
+
+
+--Arg1: The default 3D board of size NxNxN (same thing as getUpDownBoards).
+--Ret: A list of N 2D-boards (left-right), all of size NxN.
+getLeftRightBoards :: [[String]] -> [[String]]
+getLeftRightBoards board3D = transpose (getEachTransposed board3D)
+
+
+--TODO: Implement the function that gets the 3D diagonals.
+{-
+Using the alphabet board as an example: 
+    - an# (from left-top-back to right-bottom-forward)
+    - sni (from left-bottom-back to right-top-forward)
+    - gnu (from left-top-forward to right-bottom-back)
+    - ins (from right-top-forward to left-bottom-back)
+-}
+get3DDiagonals :: [[String]] -> [[String]]
+get3DDiagonals board3D = []
+
 
 
 
@@ -218,17 +239,37 @@ getComputerMove board = do
 
 
 --TODO: Check the winning conditions, etc.
+{-
+
+TODO (VERY IMPORTANT):
+When implementing the 2D tictactoe check on the "back-forward" kind of boards,
+make sure that you send the transpose of each 2D board.
+Because my generic "is there a tictactoe in this 2D board" function will only check:
+    - horizontal tictactoe condition (left to right)
+    - and both of the diagonals' tictactoe condition.
+
+Meaning, it won't check the vertical ones.
+This is because I want to avoid checking the same rows/columns multiple times
+when I'm using different aspects of boards (up-down VS back-forward).
+
+
+Anyway, yadiyadiyada.
+
+-}
 getOutcome board = 0 
 
 
 
---Announces the winner (player if outcome == 1; computer if outcome == 2).
+--Announces the winner (player if outcome == 1; computer if outcome == 2; draw if outcome == 3).
+--WARNING: Do not call this function if outcome == 0 (game in progress).
 --Returns an IO action which does things (probably).
 announceWinner outcome =
     if outcome == 1 then do
         putStrLn "You win!"
-    else do
+    else if outcome == 2 then do
         putStrLn "You lose."
+    else do {-outcome == 3-}
+        putStrLn "It's a draw!"
 
 
 --Desc: Game loop.
@@ -252,8 +293,35 @@ gameLoop player board = do
                      announceWinner outcome
 
 
-debug_show3Dgrid = do
+
+
+
+-- ================================================== TESTS ==================================================
+debug_getAlphabetBoard = [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["stu", "vwx", "yz#"]]
+
+debug_getAlphabetBoard_LeftRight = [["adg", "jmp", "svy"], ["beh", "knq", "twz"], ["cfi", "lor", "ux#"]]
+debug_getAlphabetBoard_BackForward = [["abc", "jkl", "stu"], ["def", "mno", "vwx"], ["ghi", "pqr", "yz#"]]
+
+
+unitTest_LeftRight = let defaultBoard = debug_getAlphabetBoard
+                         leftRight2DBoards = getLeftRightBoards defaultBoard
+                         in leftRight2DBoards == debug_getAlphabetBoard_LeftRight
+
+
+unitTest_BackForward = let defaultBoard = debug_getAlphabetBoard
+                           backForward2DBoards = getBackForwardBoards defaultBoard
+                           in backForward2DBoards == debug_getAlphabetBoard_BackForward
+                           
+
+debug_showBoard board = do
         putStrLn ""
-        putStr (show [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["stu", "vwx", "yz#"]])
+        putStr (show board)
         putStr "\n\n"
-        putStr (toStrBoard [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["stu", "vwx", "yz#"]])
+        putStr (toStrBoard board)
+        
+debug_showBoardTranspose board = do
+        putStrLn ""
+        putStr (show (transpose board))
+        putStr "\n\n"
+        putStr (toStrBoard (transpose board))
+
