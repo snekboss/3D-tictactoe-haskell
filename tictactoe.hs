@@ -307,9 +307,9 @@ getOutcome board = let ud = getUpDownBoards board
 --Returns an IO action which does things (probably).
 announceWinner outcome =
     if outcome == 1 then do
-        putStrLn "You win!"
+        putStrLn "Player wins!"
     else if outcome == 2 then do
-        putStrLn "You lose."
+        putStrLn "Computer wins!"
     else do {-outcome == 3-}
         putStrLn "It's a draw!"
 
