@@ -288,8 +288,8 @@ draw = 3.
 getOutcome :: [[String]] -> Int
 getOutcome board = let ud = getUpDownBoards board
                        lf = getLeftRightBoards board --this is actually doing what I thought back-forward was meant to do (vertical checks)
-                       bfTranspose = getBackForwardBoards board
-                       allBoards2D = [ud, lf, bfTranspose]
+                       bf = getBackForwardBoards board
+                       allBoards2D = [ud, lf, bf]
                        playerWins = or (map is2Dtictactoe_forPlayer allBoards2D)
                        computerWins = or (map is2Dtictactoe_forComputer allBoards2D)
                        concatted = concat (concat board)
