@@ -43,9 +43,9 @@ toStrBoard [] = ""
 toStrBoard (list : remListOfListOfStrings) = toStrOneList list ++ "\n" ++ toStrBoard remListOfListOfStrings
 
 
---Shows a board in REPL.
+--Shows an up-down (default) board in REPL as a back-forward board.
 showBoard board = do
-    putStrLn (toStrBoard (transpose board))
+    putStrLn (toStrBoard (getBackForwardBoards board))
 
 
 
@@ -57,10 +57,10 @@ initBoard dims = replicate dims (replicate dims (replicate dims (emptyChar)))
 
 
 --Arg1: The size of the board
---Arg2: A tictactoe move triplet (x,y,z), where each coordinate is in the inclusive range [1, Arg2].
+--Arg2: A tictactoe move triplet (col, row, face), where each coordinate is in the inclusive range [1, Arg2].
 --Ret: True if the move triplet is out of bounds.
 isOutOfBounds :: Int -> (Int, Int, Int) -> Bool
-isOutOfBounds size (x, y, z) = x < 1 || y < 1 || z < 1 || x > size || y > size || z > size
+isOutOfBounds size (col, row, face) = col < 1 || row < 1 || face < 1 || col > size || row > size || face > size
 
 
 --Desc: Apply a function to the element at the given index (very cool).
@@ -73,41 +73,33 @@ map_at i f list = let (prevElems, target : remElems) = splitAt i list
                   in prevElems ++ (f target : remElems)
 
 
---Desc: Update element (x, y, z) of a three-dimensional array.
---Arg1: (x,y,z) triplet whose value needs to be changed.
+--Desc: Update element (col, row, face) of a three-dimensional array.
+--Arg1: (col, row, face) triplet whose value needs to be changed.
 --Arg2: The new value.
 --Arg3: Input 3D grid
---Ret: New grid, where the value at (x,y,z) is set to Arg2.
+--Ret: New grid, where the value at (col, row, face) is set to Arg2.
 update3 :: (Int, Int, Int) -> a -> [[[a]]] -> [[[a]]]
-update3 (x, y, z) val grid = map_at x (map_at y (map_at z (const val))) grid
+update3 (col, row, face) val grid = map_at col (map_at row (map_at face (const val))) grid
 
 
---TODO: Might not working as intended (though, it COULD be working as intended...)
---      What this function does VS the image of a 3D grid in my head are two different things.
---      Must decide which lists represent which parts of the board, etc.
---      Use `debug_show3Dgrid` to get an idea.
---Arg1: A tictactoe triplet (x,y,z), where each coordinate is in the inclusive range [1, (length Arg2)].
+--Arg1: A tictactoe triplet (col, row, face), where each coordinate is in the inclusive range [1, (length Arg2)].
 --Arg2: A character value: '-' or 'X' or 'O'.
 --Arg3: A 3D tictactoe board.
 --Ret: The new tictactoe board, where the board at the triplet's coordinates now contains Arg2's value.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
 setCell :: (Int, Int, Int) -> Char -> [[String]] -> [[String]]
-setCell (x, y, z) = update3 ((z - 1), (y - 1), (x - 1))
+setCell (col, row, face) = update3 ((face - 1), (row - 1), (col - 1))
 
 
---TODO: Might not working as intended (though, it COULD be working as intended...)
---      What this function does VS the image of a 3D grid in my head are two different things.
---      Must decide which lists represent which parts of the board, etc.
---      Use `debug_show3Dgrid` to get an idea.
---Arg1: A tictactoe triplet (x,y,z), where each coordinate is in the inclusive range [1, (length Arg2)].
+--Arg1: A tictactoe triplet (col, row, face), where each coordinate is in the inclusive range [1, (length Arg2)].
 --Arg2: A 3D tictactoe board.
 --Ret: A char equal to '.' or 'X' or 'O'.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
 getCell :: (Int, Int, Int) -> [[String]] -> Char
-getCell (x, y, z) board = board !! (z - 1) !! (y - 1) !! (x - 1)
+getCell (col, row, face) board = board !! (face - 1) !! (row - 1) !! (col - 1)
 
 
---Arg1: A tictactoe move triplet (x,y,z), where each coordinate is in the inclusive range [1, (length Arg2)].
+--Arg1: A tictactoe move triplet (col, row, face), where each coordinate is in the inclusive range [1, (length Arg2)].
 --Arg2: A 3D tictactoe board.
 --Ret: True if the move is available on the board.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
@@ -218,10 +210,7 @@ getPlayerMove board = do
                     getPlayerMove board
                 else do
                     let [face, row, col] = maybeNums
-                        x = col
-                        y = row
-                        z = face
-                        triplet = (fromJust x, fromJust y, fromJust z)
+                        triplet = (fromJust col, fromJust row, fromJust face)
                         boardSize = length board
                         in
                             if isOutOfBounds boardSize triplet then do
@@ -243,8 +232,8 @@ getPlayerMove board = do
 getComputerMove board = do
     --TODO: Must treat the triplets as (col, row, face).
     --It's the same as (x,y,z), but I should think of them that way.
-    putStrLn "TODO: Computer moves at (3,2,1)."
-    return (1,2,3)
+    putStrLn "TODO: Computer moves at (3,2,1) (face row col)."
+    return (1,2,3) -- (col, row, face)
 
 
 --TODO: Check the winning conditions, etc.
@@ -329,7 +318,7 @@ gameLoop player board = do
          let outcome = getOutcome board
              in
                  if outcome == 0 then do
-                     showBoard board --x is a particular column; y is a row; z is a board face (from left to right)
+                     showBoard board
                      if player == (humanPlayer) then do
                          playerMove <- getPlayerMove board
                          let newBoard = setCell playerMove playerChar board
