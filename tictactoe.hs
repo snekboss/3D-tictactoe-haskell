@@ -241,23 +241,63 @@ getComputerMove board = do
 --TODO: Check the winning conditions, etc.
 {-
 
-TODO (VERY IMPORTANT):
-When implementing the 2D tictactoe check on the "back-forward" kind of boards,
-make sure that you send the transpose of each 2D board.
-Because my generic "is there a tictactoe in this 2D board" function will only check:
-    - horizontal tictactoe condition (left to right)
-    - and both of the diagonals' tictactoe condition.
-
-Meaning, it won't check the vertical ones.
-This is because I want to avoid checking the same rows/columns multiple times
-when I'm using different aspects of boards (up-down VS back-forward).
-
-
-Anyway, yadiyadiyada.
+backForward list has to be transposed.
 
 -}
-getOutcome board = 0 
 
+--Arg1: A single 2D tictactoe board.
+--Ret: The two diagonals of the 2D board.
+getDiagonals :: [String] -> [String]
+getDiagonals board2D = let size = length board2D
+                           diagonal1 = zipWith (!!) board2D [0..(size - 1)]
+                           diagonal2 = zipWith (!!) (reverse (transpose board2D)) [0..(size - 1)]
+                       in [diagonal1, diagonal2]
+
+
+--Arg1: A single 2D tictactoe board.
+--Ret: Returns (playerChar) or (computerChar) if one of them won; otherwise returns (emptyChar).
+--WARNING: Only checks horizontally and the 2 diagonals. No vertical checks.
+is2Dtictactoe :: Char -> [String] -> Char
+is2Dtictactoe c board2D = let boardSize = length board2D
+                              winRow = replicate boardSize c
+                              horizontalWin = or (map (==winRow) board2D)
+                              diagonalWin = or (map (==winRow) (getDiagonals board2D))
+                          in
+                              if horizontalWin || diagonalWin then c else (emptyChar)
+
+--Arg1: A list of 2D tictactoe boards.
+--Ret: True if player has a full row in at least one of the boards.
+is2Dtictactoe_forPlayer :: [[String]] -> Bool
+is2Dtictactoe_forPlayer boards2D = elem (playerChar) (map (is2Dtictactoe (playerChar)) boards2D)
+
+--Arg1: A list of 2D tictactoe boards.
+--Ret: True if computer has a full row in at least one of the boards.
+is2Dtictactoe_forComputer :: [[String]] -> Bool
+is2Dtictactoe_forComputer boards2D = elem (computerChar) (map (is2Dtictactoe (computerChar)) boards2D)
+
+
+--Arg1: The 3D board.
+{-Ret:
+gameInProgress = 0,
+player1Wins = 1,
+player2Wins = 2,
+draw = 3.
+-}
+getOutcome :: [[String]] -> Int
+getOutcome board = let ud = getUpDownBoards board
+                       lf = getLeftRightBoards board
+                       bfTranspose = transpose (getBackForwardBoards board) --transpose bf, because we want vertical checks on that.
+                       allBoards2D = [ud, lf, bfTranspose]
+                       playerWins = or (map is2Dtictactoe_forPlayer allBoards2D)
+                       computerWins = or (map is2Dtictactoe_forComputer allBoards2D)
+                       concatted = concat (concat board)
+                       thereAreRemainingEmptyCells = elem (emptyChar) concatted
+                       --TODO: Check the 4 3D diagonals.
+                    in
+                        if playerWins then 1
+                        else if computerWins then 2
+                        else if thereAreRemainingEmptyCells then 0 -- gameInProgress
+                        else 3 --draw
 
 
 --Announces the winner (player if outcome == 1; computer if outcome == 2; draw if outcome == 3).
@@ -280,7 +320,7 @@ gameLoop player board = do
          let outcome = getOutcome board
              in
                  if outcome == 0 then do
-                     putStr (toStrBoard board)
+                     putStr (toStrBoard (transpose board)) --x is a particular column; y is a row; z is a board face (from left to right)
                      if player == (humanPlayer) then do
                          playerMove <- getPlayerMove board
                          let newBoard = setCell playerMove playerChar board
@@ -325,3 +365,7 @@ debug_showBoardTranspose board = do
         putStr "\n\n"
         putStr (toStrBoard (transpose board))
 
+-- some 2D boards
+debug_2db1 = ["...", "...", "..."]
+debug_2db2 = ["XXX", "..O", "O.."]
+debug_2db3 = ["X..", ".XO", "O.X"]
