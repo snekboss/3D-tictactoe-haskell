@@ -206,10 +206,10 @@ gameStart player board = do
         gameLoop player board
 
 
---Asks the move triplet (x,y,z) of the player.
---Returns an IO (Int, Int, Int) (probably). Use the "<-" operator when working with this function.
+--Asks the move triplet (face row col) of the player.
+--Returns (col, row, face). Yes, it's reversed. Because otherwise, the rest of the code doesn't work.
 getPlayerMove board = do
-        putStr "Your move (x y z)?: "
+        putStr "Your move (face row col)?: "
         input <- getLine
         let maybeNums = map readMaybe (words input) :: [Maybe Int]
             in
@@ -217,7 +217,10 @@ getPlayerMove board = do
                     putStrLn "Please enter 3 numbers."
                     getPlayerMove board
                 else do
-                    let [x, y, z] = maybeNums
+                    let [face, row, col] = maybeNums
+                        x = col
+                        y = row
+                        z = face
                         triplet = (fromJust x, fromJust y, fromJust z)
                         boardSize = length board
                         in
@@ -238,7 +241,9 @@ getPlayerMove board = do
 
 --TODO: Implement computer AI.
 getComputerMove board = do
-    putStrLn "TODO: Computer moves at (1,2,3)."
+    --TODO: Must treat the triplets as (col, row, face).
+    --It's the same as (x,y,z), but I should think of them that way.
+    putStrLn "TODO: Computer moves at (3,2,1)."
     return (1,2,3)
 
 
