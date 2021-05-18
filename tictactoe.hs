@@ -43,9 +43,9 @@ toStrBoard [] = ""
 toStrBoard (list : remListOfListOfStrings) = toStrOneList list ++ "\n" ++ toStrBoard remListOfListOfStrings
 
 
---Shows an up-down (default) board in REPL as a back-forward board.
+--Shows an up-down (default) board, but transposes it first...
 showBoard board = do
-    putStrLn (toStrBoard (getBackForwardBoards board))
+    putStrLn (toStrBoard (transpose board))
 
 
 
@@ -130,7 +130,9 @@ getUpDownBoards board3D = board3D
 --Arg1: The default 3D board of size NxNxN (same thing as getUpDownBoards).
 --Ret: A list of N 2D-boards (back-forward), all of size NxN.
 getBackForwardBoards :: [[String]] -> [[String]]
-getBackForwardBoards board3D = transpose board3D
+getBackForwardBoards board3D = getEachTransposed (transpose board3D)
+-- getBackForwardBoards board3D = transpose board3D
+
 
 
 --Arg1: The default 3D board of size NxNxN (same thing as getUpDownBoards).
@@ -263,10 +265,12 @@ is2Dtictactoe c board2D = let boardSize = length board2D
                           in
                               if horizontalWin || diagonalWin then c else (emptyChar)
 
+
 --Arg1: A list of 2D tictactoe boards.
 --Ret: True if player has a full row in at least one of the boards.
 is2Dtictactoe_forPlayer :: [[String]] -> Bool
 is2Dtictactoe_forPlayer boards2D = elem (playerChar) (map (is2Dtictactoe (playerChar)) boards2D)
+
 
 --Arg1: A list of 2D tictactoe boards.
 --Ret: True if computer has a full row in at least one of the boards.
@@ -283,8 +287,8 @@ draw = 3.
 -}
 getOutcome :: [[String]] -> Int
 getOutcome board = let ud = getUpDownBoards board
-                       lf = getLeftRightBoards board
-                       bfTranspose = transpose (getBackForwardBoards board) --transpose bf, because we want vertical checks on that.
+                       lf = getLeftRightBoards board --this is actually doing what I thought back-forward was meant to do (vertical checks)
+                       bfTranspose = getBackForwardBoards board
                        allBoards2D = [ud, lf, bfTranspose]
                        playerWins = or (map is2Dtictactoe_forPlayer allBoards2D)
                        computerWins = or (map is2Dtictactoe_forComputer allBoards2D)
@@ -365,6 +369,65 @@ debug_showBoardTranspose board = do
         putStr (toStrBoard (transpose board))
 
 -- some 2D boards
-debug_2db1 = ["...", "...", "..."]
+debug_test2D_1 = (is2Dtictactoe 'X' ["XXX",
+                                     "...",
+                                     "..."]) == 'X'
+                                     
+debug_test2D_2 = (is2Dtictactoe 'X' ["...",
+                                     "XXX",
+                                     "..."]) == 'X'
+
+debug_test2D_3 = (is2Dtictactoe 'X' ["...",
+                                     "...",
+                                     "XXX"]) == 'X'
+
+debug_test2D_4 = (is2Dtictactoe 'X' ["X..",
+                                     "X..",
+                                     "X.."]) == 'X'
+
+
+debug_test2D_5 = (is2Dtictactoe 'X' [".X.",
+                                     ".X.",
+                                     ".X."]) == 'X'
+
+
+debug_test2D_6 = (is2Dtictactoe 'X' ["..X",
+                                     "..X",
+                                     "..X"]) == 'X'
+
+
+debug_test2D_7 = (is2Dtictactoe 'X' ["X..",
+                                     ".X.",
+                                     "..X"]) == 'X'
+
+debug_test2D_8 = (is2Dtictactoe 'X' ["..X",
+                                     ".X.",
+                                     "X.."]) == 'X'
+
+debug_test2D_all = debug_test2D_1 && debug_test2D_2 && debug_test2D_3 && debug_test2D_4 && debug_test2D_5 && debug_test2D_6 && debug_test2D_7 && debug_test2D_8
+
+
 debug_2db2 = ["XXX", "..O", "O.."]
 debug_2db3 = ["X..", ".XO", "O.X"]
+
+debug_whynot1 = let board = initBoard 3
+                    b1 = setCell (1, 1, 1) 'X' board
+                    b2 = setCell (1, 1, 2) 'X' b1
+                    b3 = setCell (1, 1, 3) 'X' b2
+                in is2Dtictactoe_forPlayer (getLeftRightBoards b3)
+
+debug_updown1 = let board = initBoard 3
+                    b1 = setCell (1, 1, 2) 'X' board
+                    b2 = setCell (2, 1, 2) 'X' b1
+                    b3 = setCell (3, 1, 2) 'X' b2
+                -- in putStrLn (toStrBoard (getUpDownBoards b3))
+                in is2Dtictactoe_forPlayer (getBackForwardBoards b3)
+
+
+debug_leftright1 = let board = initBoard 3
+                       b1 = setCell (1, 1, 1) 'X' board
+                       b2 = setCell (1, 1, 2) 'X' b1
+                       b3 = setCell (1, 1, 3) 'X' b2
+                   -- in putStrLn (toStrBoard (getUpDownBoards b3))
+                   in is2Dtictactoe_forPlayer (getBackForwardBoards b3)
+                
