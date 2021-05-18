@@ -43,6 +43,10 @@ toStrBoard [] = ""
 toStrBoard (list : remListOfListOfStrings) = toStrOneList list ++ "\n" ++ toStrBoard remListOfListOfStrings
 
 
+--Shows a board in REPL.
+showBoard board = do
+    putStrLn (toStrBoard (transpose board))
+
 
 
 -- ============================== Board related functions (hopefully) ==============================
@@ -320,7 +324,7 @@ gameLoop player board = do
          let outcome = getOutcome board
              in
                  if outcome == 0 then do
-                     putStr (toStrBoard (transpose board)) --x is a particular column; y is a row; z is a board face (from left to right)
+                     showBoard board --x is a particular column; y is a row; z is a board face (from left to right)
                      if player == (humanPlayer) then do
                          playerMove <- getPlayerMove board
                          let newBoard = setCell playerMove playerChar board
@@ -330,6 +334,7 @@ gameLoop player board = do
                          let newBoard = setCell computerMove computerChar board
                              in gameLoop (3 - player) newBoard
                  else do
+                     showBoard board
                      announceWinner outcome
 
 
