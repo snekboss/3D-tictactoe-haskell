@@ -336,10 +336,12 @@ getComputerMove board = do
 
 
 
---Announces the winner (player if outcome == 1; computer if outcome == 2; draw if outcome == 3).
 --WARNING: Do not call this function if outcome == 0 (game in progress).
+--Desc: Announces the winner.
+--Arg1: (player if outcome == 1; computer if outcome == 2; draw if outcome == 3).
 --Ret: IO ()
 announceWinner :: Int -> IO ()
+announceWinner 0 = error "ERROR: Trying to announceWinner while the game is still in progress."
 announceWinner outcome =
     if outcome == 1 then do
         putStrLn "Player wins!"
