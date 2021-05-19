@@ -108,19 +108,17 @@ isEmpty triplet board = (getCell triplet board) == (emptyChar)
 
 
 
-
--- ============================== Extracting 2D boards out of the 3D board ==============================
--- ******************** Common Helper Functions ********************
+-- ============================== Extracting 2D boards and 3D diagonals out of the 3D board ==============================
+-- ==================== Extracting 2D boards out of the 3D board ====================
+-- ********** Common Helper Functions **********
 --Arg1: The 3D board.
 --Ret: The same 3D board, however each 2D board is transposed.
 getEachTransposed :: [[String]] -> [[String]]
-getEachTransposed [] = []
-getEachTransposed (list : remLists) = transpose list : getEachTransposed remLists
+getEachTransposed = map transpose
 
 
 
-
--- ******************** The functions that get me certain types of 2D boards out of *the* 3D Board. ********************
+-- ********** Extracting 2D boards. **********
 --Arg1: The default 3D board of size NxNxN (same thing as getUpDownBoards).
 --Ret: A list of N 2D-boards (up-down), all of size NxN.
 getUpDownBoards :: [[String]] -> [[String]]
@@ -134,23 +132,38 @@ getBackForwardBoards board3D = getEachTransposed (transpose board3D)
 -- getBackForwardBoards board3D = transpose board3D
 
 
-
 --Arg1: The default 3D board of size NxNxN (same thing as getUpDownBoards).
 --Ret: A list of N 2D-boards (left-right), all of size NxN.
 getLeftRightBoards :: [[String]] -> [[String]]
 getLeftRightBoards board3D = transpose (getEachTransposed board3D)
 
 
---TODO: Implement the function that gets the 3D diagonals.
+
+
+-- ==================== Extracting the 3D diagonals ====================
+--WARNING: Very clever functions ahead.
+
+--Returns the diagonal of a square matrix.
+diag :: [[a]] -> [a]
+diag [] = []
+diag ((x : xs) : rows) = x : diag (map tail rows)
+
+
+--Returns the other diagonal of a square matrix.
+otherDiag :: [[a]] -> [a]
+otherDiag = diag . (map reverse)
+
+
+--Returns the four diagonals of the 3D board (very very clever function).
 {-
-Using the alphabet board as an example: 
-    - an# (from left-top-back to right-bottom-forward)
-    - sni (from left-bottom-back to right-top-forward)
-    - gnu (from left-top-forward to right-bottom-back)
-    - ins (from right-top-forward to left-bottom-back)
+diag (map diag cube)
+otherDiag (map diag cube)
+diag (map otherDiag cube)
+otherDiag (map otherDiag cube)
 -}
-get3DDiagonals :: [[String]] -> [[String]]
-get3DDiagonals board3D = []
+cornerDiags :: [[[a]]] -> [[a]]
+cornerDiags cube = [f (map g cube) | f <- [diag, otherDiag], g <- [diag, otherDiag]]
+
 
 
 
@@ -272,10 +285,24 @@ is2Dtictactoe_forPlayer :: [[String]] -> Bool
 is2Dtictactoe_forPlayer boards2D = elem (playerChar) (map (is2Dtictactoe (playerChar)) boards2D)
 
 
+--Arg1: A single tictactoe row.
+--Ret: True if player has a win condition in this row.
+isTictactoeRow_forPlayer :: String -> Bool
+isTictactoeRow_forPlayer row = let size = length row
+                               in row == (replicate size (playerChar))
+
+
 --Arg1: A list of 2D tictactoe boards.
 --Ret: True if computer has a full row in at least one of the boards.
 is2Dtictactoe_forComputer :: [[String]] -> Bool
 is2Dtictactoe_forComputer boards2D = elem (computerChar) (map (is2Dtictactoe (computerChar)) boards2D)
+
+
+--Arg1: A single tictactoe row.
+--Ret: True if computer has a win condition in this row.
+isTictactoeRow_forComputer :: String -> Bool
+isTictactoeRow_forComputer row = let size = length row
+                               in row == (replicate size (computerChar))
 
 
 --Arg1: The 3D board.
@@ -289,12 +316,12 @@ getOutcome :: [[String]] -> Int
 getOutcome board = let ud = getUpDownBoards board
                        lf = getLeftRightBoards board --this is actually doing what I thought back-forward was meant to do (vertical checks)
                        bf = getBackForwardBoards board
+                       diagonals3D = cornerDiags board
                        allBoards2D = [ud, lf, bf]
-                       playerWins = or (map is2Dtictactoe_forPlayer allBoards2D)
-                       computerWins = or (map is2Dtictactoe_forComputer allBoards2D)
+                       playerWins = or (map is2Dtictactoe_forPlayer allBoards2D) || or (map isTictactoeRow_forPlayer diagonals3D)
+                       computerWins = or (map is2Dtictactoe_forComputer allBoards2D) || or (map isTictactoeRow_forComputer diagonals3D)
                        concatted = concat (concat board)
                        thereAreRemainingEmptyCells = elem (emptyChar) concatted
-                       --TODO: Check the 4 3D diagonals.
                     in
                         if playerWins then 1
                         else if computerWins then 2
