@@ -13,37 +13,29 @@ computerPlayer = 2
 
 
 -- ============================== Board to String related stuff ==============================
---Desc: This is a helper function, meant to be called by toStrOneRow.
---Arg1: A row string.
---Ret: An output string.
-toStrOneRow_helper :: String -> String
-toStrOneRow_helper [c] = [' ', c]
-toStrOneRow_helper (c : remStr) = [' ', c] ++ (toStrOneRow_helper remStr)
+--Intersperses a string with ' '.
+--Arg1: One row, like ".XO".
+--Ret: An output string, like ". X O".
+toStrRow :: String -> String
+toStrRow = intersperse ' '
 
 
---Desc: Takes a row like "-XO" and prints it like "- X O"
---      Uses toStrOneRow_helper function to achieve this.
---Arg1: A row like "-XO".
---Ret: An output string like "- X O ".
-toStrOneRow :: String -> String
-toStrOneRow (c : remStr) = c : toStrOneRow_helper remStr
+--Arg1: One 2D board.
+--Ret: String output of the 2D board.
+toStrBoard2D :: [String] -> String
+toStrBoard2D board2D = intercalate "   " (map toStrRow board2D)
 
 
---Arg1: One list of strings.
---Ret: String output
-toStrOneList :: [String] -> String
-toStrOneList [s] = toStrOneRow s
-toStrOneList (s : remList) = (toStrOneRow s) ++ "   " ++ toStrOneList remList
-
-
---Arg1: A game board.
+--Arg1: 3D board.
 --Ret: Formatted output string of the board.
 toStrBoard :: [[String]] -> String
-toStrBoard [] = ""
-toStrBoard (list : remListOfListOfStrings) = toStrOneList list ++ "\n" ++ toStrBoard remListOfListOfStrings
+toStrBoard board3D = unlines (map toStrBoard2D board3D)
 
 
---Shows an up-down (default) board, but transposes it first...
+--Shows an up-down (default) board, but transposes it first, because it looks right...
+--When printed like this, we can easily choose a move based on (face, row, col) in that order.
+--What we see matches with what we get. Or something... Anyway.
+showBoard :: [[String]] -> IO ()
 showBoard board = do
     putStrLn (toStrBoard (transpose board))
 
@@ -143,18 +135,20 @@ getLeftRightBoards board3D = transpose (getEachTransposed board3D)
 -- ==================== Extracting the 3D diagonals ====================
 --WARNING: Very clever functions ahead.
 
---Returns the diagonal of a square matrix.
+--Arg1: A board 2D.
+--Ret: The first diagonal of a square matrix..
 diag :: [[a]] -> [a]
 diag [] = []
 diag ((x : xs) : rows) = x : diag (map tail rows)
 
 
---Returns the other diagonal of a square matrix.
+--Arg1: A board 2D.
+--Ret: The other diagonal of a square matrix.
 otherDiag :: [[a]] -> [a]
 otherDiag = diag . (map reverse)
 
 
---Returns the four diagonals of the 3D board (very very clever function).
+--Ret: The four diagonals of the 3D board (very very clever function).
 {-
 diag (map diag cube)
 otherDiag (map diag cube)
@@ -168,103 +162,11 @@ cornerDiags cube = [f (map g cube) | f <- [diag, otherDiag], g <- [diag, otherDi
 
 
 
--- ============================== Game loop, etc. ==============================
-
---Asks the size of the board.
---Returns an IO Int. Use the "<-" operator when working with this function.
-askBoardSize = do
-        putStr "Enter board size: "
-        input <- getLine
-        let dims = readMaybe input :: Maybe Int
-         in
-            if dims == Nothing then do
-                putStrLn "Invalid input."
-                askBoardSize
-            else if dims < (Just 3) then do
-                putStrLn "The size cannot be less than 3."
-                askBoardSize
-            else do
-                return (fromJust dims)
-
-
---Asks the starting player (human or computer).
---Returns an IO Int. Use the "<-" operator when working with this function.
-askStarterPlayer = do
-        putStrLn "Would you like to start first? (y/n)"
-        answer <- getLine
-        if answer == "y" || answer == "Y" then do
-            return humanPlayer
-        else if answer == "n" || answer == "N" then do
-            return computerPlayer
-        else do
-            putStrLn "Please enter 'y' or 'n'."
-            askStarterPlayer
-
-
---Desc: This is how you start the game.
-run = do
-    size <- askBoardSize
-    starter <- askStarterPlayer
-    gameStart starter (initBoard size)
-
-
---Desc: Do game initialization stuff here.
-gameStart player board = do
-        gameLoop player board
-
-
---Asks the move triplet (face row col) of the player.
---Returns (col, row, face). Yes, it's reversed. Because otherwise, the rest of the code doesn't work.
-getPlayerMove board = do
-        putStr "Your move (face row col)?: "
-        input <- getLine
-        let maybeNums = map readMaybe (words input) :: [Maybe Int]
-            in
-                if length maybeNums /= 3 || elem Nothing maybeNums then do
-                    putStrLn "Please enter 3 numbers."
-                    getPlayerMove board
-                else do
-                    let [face, row, col] = maybeNums
-                        triplet = (fromJust col, fromJust row, fromJust face)
-                        boardSize = length board
-                        in
-                            if isOutOfBounds boardSize triplet then do
-                                putStrLn ""
-                                putStrLn "Your move is out of bounds."
-                                putStrLn ("Please fit your coordinates into the inclusive [1," ++ (show boardSize) ++ "] range.")
-                                putStrLn ""
-                                getPlayerMove board
-                            else if (isEmpty triplet board) == False then do
-                                putStrLn ""
-                                putStrLn "You cannot make your move there (cell is not empty)."
-                                putStrLn ""
-                                getPlayerMove board
-                            else do
-                                return triplet
-
-
---TODO: Implement computer AI.
-getComputerMove board = do
-    --TODO: Must treat the triplets as (col, row, face).
-    --It's the same as (x,y,z), but I should think of them that way.
-    putStrLn "TODO: Computer moves at (3,2,1) (face row col)."
-    return (1,2,3) -- (col, row, face)
-
-
---TODO: Check the winning conditions, etc.
-{-
-
-backForward list has to be transposed.
-
--}
-
+-- ============================== getOutcome related (winning condition) ==============================
 --Arg1: A single 2D tictactoe board.
 --Ret: The two diagonals of the 2D board.
-getDiagonals :: [String] -> [String]
-getDiagonals board2D = let size = length board2D
-                           diagonal1 = zipWith (!!) board2D [0..(size - 1)]
-                           diagonal2 = zipWith (!!) (reverse (transpose board2D)) [0..(size - 1)]
-                       in [diagonal1, diagonal2]
+getDiagonals2D :: [String] -> [String]
+getDiagonals2D board2D = [diag board2D, otherDiag board2D]
 
 
 --Arg1: A single 2D tictactoe board.
@@ -274,7 +176,7 @@ is2Dtictactoe :: Char -> [String] -> Char
 is2Dtictactoe c board2D = let boardSize = length board2D
                               winRow = replicate boardSize c
                               horizontalWin = or (map (==winRow) board2D)
-                              diagonalWin = or (map (==winRow) (getDiagonals board2D))
+                              diagonalWin = or (map (==winRow) (getDiagonals2D board2D))
                           in
                               if horizontalWin || diagonalWin then c else (emptyChar)
 
@@ -329,9 +231,115 @@ getOutcome board = let ud = getUpDownBoards board
                         else 3 --draw
 
 
+
+
+
+-- ============================== Game loop, etc. ==============================
+
+--Asks the size of the board.
+--Ret: IO Int. Use the "<-" operator when working with this function.
+askBoardSize :: IO Int
+askBoardSize = do
+        putStr "Enter board size: "
+        input <- getLine
+        let dims = readMaybe input :: Maybe Int
+         in
+            if dims == Nothing then do
+                putStrLn "Invalid input."
+                askBoardSize
+            else if dims < (Just 3) then do
+                putStrLn "The size cannot be less than 3."
+                askBoardSize
+            else do
+                return (fromJust dims)
+
+
+
+--Asks the starting player (human or computer).
+--Ret: IO Int. Use the "<-" operator when working with this function.
+askStarterPlayer :: IO Int
+askStarterPlayer = do
+        putStrLn "Would you like to start first? (y/n)"
+        answer <- getLine
+        if answer == "y" || answer == "Y" then do
+            return humanPlayer
+        else if answer == "n" || answer == "N" then do
+            return computerPlayer
+        else do
+            putStrLn "Please enter 'y' or 'n'."
+            askStarterPlayer
+
+
+--Desc: This is how you start the game.
+--Ret: IO ().
+run :: IO ()
+run = do
+    size <- askBoardSize
+    starter <- askStarterPlayer
+    gameStart starter (initBoard size)
+
+
+--Desc: Do game initialization stuff here.
+--Arg1: Player ID (Int). Basically, (humanPlayer) or (computerPlayer).
+--Arg2: The 3D board.
+--Ret: IO ().
+gameStart :: Int -> [[String]] -> IO ()
+gameStart player board = do
+        gameLoop player board
+
+
+
+--Desc: Asks the move triplet (face row col) of the player.
+--      What the player gets asked VS what is returned is in the opposite order.
+--      Reason: The game is easier to play with this input order (face, row, col),
+--      while the rest of the code needs the other order (col, row, face).
+--Arg1: The 3D board.
+--Ret: IO (Int, Int, Int). These are (col, row, face). Yes, it's reversed.
+getPlayerMove :: [[String]] -> IO (Int, Int, Int)
+getPlayerMove board = do
+        putStr "Your move (face row col)?: "
+        input <- getLine
+        let maybeNums = map readMaybe (words input) :: [Maybe Int]
+            in
+                if length maybeNums /= 3 || elem Nothing maybeNums then do
+                    putStrLn "Please enter 3 numbers."
+                    getPlayerMove board
+                else do
+                    let [face, row, col] = maybeNums
+                        triplet = (fromJust col, fromJust row, fromJust face)
+                        boardSize = length board
+                        in
+                            if isOutOfBounds boardSize triplet then do
+                                putStrLn ""
+                                putStrLn "Your move is out of bounds."
+                                putStrLn ("Please fit your coordinates into the inclusive [1," ++ (show boardSize) ++ "] range.")
+                                putStrLn ""
+                                getPlayerMove board
+                            else if (isEmpty triplet board) == False then do
+                                putStrLn ""
+                                putStrLn "You cannot make your move there (cell is not empty)."
+                                putStrLn ""
+                                getPlayerMove board
+                            else do
+                                return triplet
+
+
+--TODO: Implement computer AI.
+getComputerMove board = do
+    --TODO: Must treat the triplets as (col, row, face).
+    --It's the same as (x,y,z), but I should think of them that way.
+    putStrLn "TODO: Computer moves at (3,2,1) (face row col)."
+    return (1,2,3) -- (col, row, face)
+
+
+
+
+
+
 --Announces the winner (player if outcome == 1; computer if outcome == 2; draw if outcome == 3).
 --WARNING: Do not call this function if outcome == 0 (game in progress).
---Returns an IO action which does things (probably).
+--Ret: IO ()
+announceWinner :: Int -> IO ()
 announceWinner outcome =
     if outcome == 1 then do
         putStrLn "Player wins!"
@@ -342,9 +350,10 @@ announceWinner outcome =
 
 
 --Desc: Game loop.
---Arg1: 1 for player1 (human); 2 for player2 (computer).
+--Arg1: (humanPlayer) or (computerPlayer)
 --Arg2: The current state of the game board.
---Ret: Some monadic IO magic.
+--Ret: IO ()
+gameLoop :: Int -> [[String]] -> IO ()
 gameLoop player board = do
          let outcome = getOutcome board
              in
@@ -366,7 +375,7 @@ gameLoop player board = do
 
 
 
--- ================================================== TESTS ==================================================
+-- ================================================== TESTS (delete later plz) ==================================================
 debug_getAlphabetBoard = [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["stu", "vwx", "yz#"]]
 
 debug_getAlphabetBoard_LeftRight = [["adg", "jmp", "svy"], ["beh", "knq", "twz"], ["cfi", "lor", "ux#"]]
