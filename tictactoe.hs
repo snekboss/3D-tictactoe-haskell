@@ -181,17 +181,17 @@ is2Dtictactoe c board2D = let boardSize = length board2D
                               if horizontalWin || diagonalWin then c else (emptyChar)
 
 
---Arg1: A list of 2D tictactoe boards.
---Ret: True if player has a full row in at least one of the boards.
-is2Dtictactoe_forPlayer :: [[String]] -> Bool
-is2Dtictactoe_forPlayer boards2D = elem (playerChar) (map (is2Dtictactoe (playerChar)) boards2D)
-
-
 --Arg1: A single tictactoe row.
 --Ret: True if player has a win condition in this row.
 isTictactoeRow_forPlayer :: String -> Bool
 isTictactoeRow_forPlayer row = let size = length row
                                in row == (replicate size (playerChar))
+                               
+--Arg1: A single tictactoe row.
+--Ret: True if computer has a win condition in this row.
+isTictactoeRow_forComputer :: String -> Bool
+isTictactoeRow_forComputer row = let size = length row
+                                 in row == (replicate size (computerChar))
 
 
 --Arg1: A list of 2D tictactoe boards.
@@ -200,11 +200,10 @@ is2Dtictactoe_forComputer :: [[String]] -> Bool
 is2Dtictactoe_forComputer boards2D = elem (computerChar) (map (is2Dtictactoe (computerChar)) boards2D)
 
 
---Arg1: A single tictactoe row.
---Ret: True if computer has a win condition in this row.
-isTictactoeRow_forComputer :: String -> Bool
-isTictactoeRow_forComputer row = let size = length row
-                               in row == (replicate size (computerChar))
+--Arg1: A list of 2D tictactoe boards.
+--Ret: True if player has a full row in at least one of the boards.
+is2Dtictactoe_forPlayer :: [[String]] -> Bool
+is2Dtictactoe_forPlayer boards2D = elem (playerChar) (map (is2Dtictactoe (playerChar)) boards2D)
 
 
 --Arg1: The 3D board.
@@ -216,10 +215,10 @@ draw = 3.
 -}
 getOutcome :: [[String]] -> Int
 getOutcome board = let ud = getUpDownBoards board
-                       lf = getLeftRightBoards board --this is actually doing what I thought back-forward was meant to do (vertical checks)
+                       lr = getLeftRightBoards board --this is actually doing what I thought back-forward was meant to do (vertical checks)
                        bf = getBackForwardBoards board
                        diagonals3D = cornerDiags board
-                       allBoards2D = [ud, lf, bf]
+                       allBoards2D = [ud, lr, bf]
                        playerWins = or (map is2Dtictactoe_forPlayer allBoards2D) || or (map isTictactoeRow_forPlayer diagonals3D)
                        computerWins = or (map is2Dtictactoe_forComputer allBoards2D) || or (map isTictactoeRow_forComputer diagonals3D)
                        concatted = concat (concat board)
@@ -229,6 +228,93 @@ getOutcome board = let ud = getUpDownBoards board
                         else if computerWins then 2
                         else if thereAreRemainingEmptyCells then 0 -- gameInProgress
                         else 3 --draw
+
+
+
+
+
+-- ============================== heuristicAnalysis related ==============================
+
+--Arg1: Board size.
+--Ret: The score of the winning condition.
+getWinningScore :: Num a => Int -> a
+getWinningScore boardSize = fromIntegral (boardSize ^ boardSize) ^ boardSize
+
+
+--TODO: What kind of a countToScore mapping?
+--      Maybe assume that the opposing player has no chips on the row.
+--      So count==0 would not mean "no score". It'd mean that "the row is completely empty",
+--      and so maybe it deserves to get some score > 0.
+--Arg1: Number of chips of a certain player.
+--Arg2: The size of the board.
+--Ret: A score value (preferably non-linear) WRT the count and boardSize.
+countToScore :: Num a => Int -> Int -> a
+countToScore count boardSize = if count == boardSize then
+                                   fromIntegral (getWinningScore boardSize) -- Win condition satisfied.
+                               else fromIntegral (boardSize ^ count) -- TODO: Need a nice non-linear mapping.
+
+
+
+--Arg1: A single row.
+--Ret: A tuple (playerScore, computerScore).
+getScoresInRow :: Num a => String -> (a, a)
+getScoresInRow row = let boardSize = length row
+                         playerCount = length [p | p <- row, p == (playerChar)]
+                         playerScore = countToScore playerCount boardSize
+                         computerCount = length [c | c <- row, c == (computerChar)]
+                         computerScore = countToScore computerCount boardSize
+                     in
+                         -- TODO: Should I remove this if check? Is it bad?
+                         if playerCount > 0 && computerCount > 0 then (0, 0) -- Nobody can win in this row.
+                         else (playerScore, computerScore)
+                         
+                         
+
+--Arg1: A single board 2D.
+--Ret: A tuple (playerSum, computerSum).
+getScoresInBoard2D :: Num a => [String] -> (a, a)
+getScoresInBoard2D board2D = let (playerScoresList, computerScoresList) = unzip (map (getScoresInRow) board2D)
+                                 playerSum = foldr (+) 0 playerScoresList
+                                 computerSum = foldr (+) 0 computerScoresList
+                                 ([p1, p2], [c1, c2]) = unzip (map getScoresInRow (getDiagonals2D board2D))
+                                 totalPlayer = playerSum + p1 + p2
+                                 totalComputer = computerSum + c1 + c2
+                             in (totalPlayer, totalComputer)
+
+--Arg1: A list of 2D boards.
+--Ret: A tuple (playerSum, computerSum)
+getScoresInListOf2Dboards :: Num a => [[String]] -> (a, a)
+getScoresInListOf2Dboards listBoard2D = let (playerScoresList, computerScoresList) = unzip (map getScoresInBoard2D listBoard2D)
+                                            playerSum = foldr (+) 0 playerScoresList
+                                            computerSum = foldr (+) 0 computerScoresList
+                                        in (playerSum, computerSum)
+
+
+
+--Arg1: A list of 3D diagonals.
+--Ret: A tuple (playerSum, computerSum).
+getScoresInDiagonals3D :: Num a => [String] -> (a, a)
+getScoresInDiagonals3D diagonals3D = let (playerScoresList, computerScoresList) = unzip (map getScoresInRow diagonals3D)
+                                         playerSum = foldr (+) 0 playerScoresList
+                                         computerSum = foldr (+) 0 computerScoresList
+                                     in (playerSum, computerSum)
+
+
+--Arg1: Board 3D.
+--Ret: A tuple (playerScore, computerScore).
+getHeuristicScores :: Num a => [[String]] -> (a, a)
+getHeuristicScores board = let ud = getUpDownBoards board
+                               lr = getLeftRightBoards board
+                               bf = getBackForwardBoards board
+                               diagonals3D = cornerDiags board
+                               allBoards2D = [ud, lr, bf]
+                               (playerSumsList, computerSumsList) = unzip (map getScoresInListOf2Dboards allBoards2D)
+                               (playerDiag3Dsum, computerDiag3Dsum) = getScoresInDiagonals3D diagonals3D
+                               playerBoardsSum = foldr (+) 0 playerSumsList
+                               computerBoardsSum = foldr (+) 0 computerSumsList
+                               totalPlayerScore = playerBoardsSum + playerDiag3Dsum
+                               totalComputerScore = computerBoardsSum + computerDiag3Dsum
+                           in (totalPlayerScore, totalComputerScore)
 
 
 
@@ -468,4 +554,10 @@ debug_leftright1 = let board = initBoard 3
                        b3 = setCell (1, 1, 3) 'X' b2
                    -- in putStrLn (toStrBoard (getUpDownBoards b3))
                    in is2Dtictactoe_forPlayer (getBackForwardBoards b3)
-                
+
+
+testHeurMid = getHeuristicScores (setCell (2,2,2) 'X' (initBoard 3))
+testHeur0 = getHeuristicScores (initBoard 3)
+testHeur1 = getHeuristicScores (setCell (1,1,1) 'X' (initBoard 3))
+testHeur2 = getHeuristicScores (setCell (2,1,1) 'X' (setCell (1,1,1) 'X' (initBoard 3)))
+testHeur3 = getHeuristicScores (setCell (3,1,1) 'X' (setCell (2,1,1) 'X' (setCell (1,1,1) 'X' (initBoard 3))))
