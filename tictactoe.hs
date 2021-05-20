@@ -206,12 +206,19 @@ is2Dtictactoe_forPlayer :: [[String]] -> Bool
 is2Dtictactoe_forPlayer boards2D = elem (playerChar) (map (is2Dtictactoe (playerChar)) boards2D)
 
 
+-- Outcomes:
+outcomeGameInProgress = 0
+outcomePlayerWins = 1
+outcomeComputerWins = 2
+outcomeDraw = 3
+
+
 --Arg1: The 3D board.
 {-Ret:
-gameInProgress = 0,
-player1Wins = 1,
-player2Wins = 2,
-draw = 3.
+(outcomeGameInProgress),
+(outcomePlayerWins),
+(outcomeComputerWins),
+(outcomeDraw).
 -}
 getOutcome :: [[String]] -> Int
 getOutcome board = let ud = getUpDownBoards board
@@ -224,10 +231,10 @@ getOutcome board = let ud = getUpDownBoards board
                        concatted = concat (concat board)
                        thereAreRemainingEmptyCells = elem (emptyChar) concatted
                     in
-                        if playerWins then 1
-                        else if computerWins then 2
-                        else if thereAreRemainingEmptyCells then 0 -- gameInProgress
-                        else 3 --draw
+                        if playerWins then (outcomePlayerWins)
+                        else if computerWins then (outcomeComputerWins)
+                        else if thereAreRemainingEmptyCells then (outcomeGameInProgress)
+                        else (outcomeDraw)
 
 
 
@@ -422,18 +429,18 @@ getComputerMove board = do
 
 
 
---WARNING: Do not call this function if outcome == 0 (game in progress).
+--WARNING: Do not call this function if (outcomeGameInProgress)
 --Desc: Announces the winner.
---Arg1: (player if outcome == 1; computer if outcome == 2; draw if outcome == 3).
+--Arg1: outcome.
 --Ret: IO ()
 announceWinner :: Int -> IO ()
 announceWinner 0 = error "ERROR: Trying to announceWinner while the game is still in progress."
 announceWinner outcome =
-    if outcome == 1 then do
+    if outcome == (outcomePlayerWins) then do
         putStrLn "Player wins!"
-    else if outcome == 2 then do
+    else if outcome == (outcomeComputerWins) then do
         putStrLn "Computer wins!"
-    else do {-outcome == 3-}
+    else do {- (outcomeDraw) -}
         putStrLn "It's a draw!"
 
 
