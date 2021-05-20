@@ -556,8 +556,18 @@ debug_leftright1 = let board = initBoard 3
                    in is2Dtictactoe_forPlayer (getBackForwardBoards b3)
 
 
+--(49, 49)
+testHeurEmpty = getHeuristicScores (initBoard 3)
+
+--(57, 49)
+testHeurMeh = getHeuristicScores (setCell (1,1,2) 'X' (initBoard 3))
+
+--(75, 49)
 testHeurMid = getHeuristicScores (setCell (2,2,2) 'X' (initBoard 3))
-testHeur0 = getHeuristicScores (initBoard 3)
-testHeur1 = getHeuristicScores (setCell (1,1,1) 'X' (initBoard 3))
+
+--(63, 49)
+testHeurCorner = getHeuristicScores (setCell (1,1,1) 'X' (initBoard 3))
+
+
 testHeur2 = getHeuristicScores (setCell (2,1,1) 'X' (setCell (1,1,1) 'X' (initBoard 3)))
 testHeur3 = getHeuristicScores (setCell (3,1,1) 'X' (setCell (2,1,1) 'X' (setCell (1,1,1) 'X' (initBoard 3))))
