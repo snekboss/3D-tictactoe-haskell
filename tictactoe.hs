@@ -396,7 +396,7 @@ foreachBoard_min (board : remBoards) depth isMaxPlayer alpha beta bestMove minSc
 --Arg5: Beta.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
 minimax :: (Num a, Ord a) => [[String]] -> Int -> Bool -> a -> a -> (Maybe (Int, Int, Int), a)
-minimax board 0 isMaxPlayer _ _ =
+minimax board 0 isMaxPlayer _ _ = -- TODO: Depth == 0, therefore return heuristic estimate.
     let (player1Score, player2Score) = getHeuristicScores board
     in
         if isMaxPlayer then
