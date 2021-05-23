@@ -337,56 +337,68 @@ getAllPossibleMoves board =
 
 
 
---Arg1: All possible boards.
---Arg2: Depth.
---Arg3: isMaxPlayer.
---Arg4: Alpha.
---Arg5: Beta.
---Arg6: bestMove so far (or something).
---Arg7: maxScore so far (or something). Because this is foreach for MAX.
+--Arg1: The 3D board.
+--Arg2: All possible moves
+--Arg3: Depth.
+--Arg4: isMaxPlayer.
+--Arg5: Alpha.
+--Arg6: Beta.
+--Arg7: bestMove so far (or something).
+--Arg8: maxScore so far (or something). Because this is foreach for MAX.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
-foreachBoard_max :: (Num a, Ord a) => [[[String]]] -> Int -> Bool -> a -> a -> (Int, Int, Int) -> a -> (Maybe (Int, Int, Int), a)
-foreachBoard_max [] _ _ _ _ bestMove maxScore = (Just bestMove, maxScore) -- No more elements.
+foreachMoves_max :: (Num a, Ord a) => [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> a -> a -> (Int, Int, Int) -> a -> (Maybe (Int, Int, Int), a)
+foreachMoves_max _ [] _ _ _ _ bestMove maxScore =
+    (Just bestMove, maxScore) -- No more moves.
 
-foreachBoard_max (board : remBoards) 0 isMaxPlayer alpha beta bestMove maxScore = minimax board 0 isMaxPlayer alpha beta -- TODO: Depth==0, so use minimax's existing pattern? I don't know.
+foreachMoves_max board _ 0 isMaxPlayer alpha beta bestMove maxScore =
+    minimax board 0 isMaxPlayer alpha beta
+    -- TODO: Depth==0, so use minimax's existing pattern? I don't know.
 
-foreachBoard_max (board : remBoards) depth isMaxPlayer alpha beta bestMove maxScore =
+foreachMoves_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove maxScore =
     if beta <= alpha then
         (Just bestMove, maxScore)
     else
-        let (curMove, curScore) = minimax board (depth - 1) (not isMaxPlayer) alpha beta
+        let (_, curScore) = minimax board (depth - 1) (not isMaxPlayer) alpha beta
         in
-            if curScore > maxScore then -- Then, next iteration of foreach, but with newAlpha and newMove and newScore
+            if curScore > maxScore then
+                -- curScore is better, so move is the new bestMove.
                 let newAlpha = max alpha curScore
-                in foreachBoard_max remBoards depth isMaxPlayer newAlpha beta (fromJust curMove) curScore
-            else -- Then, next iteration of foreach, but with existing values.
-                foreachBoard_max remBoards depth isMaxPlayer alpha beta bestMove maxScore
+                in foreachMoves_max board remMoves depth isMaxPlayer newAlpha beta move curScore
+            else
+                -- Check the remaining moves, while keeping the original bestMove and maxScore.
+                foreachMoves_max board remMoves depth isMaxPlayer alpha beta bestMove maxScore
 
 
---Arg1: All possible boards.
---Arg2: Depth.
---Arg3: isMaxPlayer.
---Arg4: Alpha.
---Arg5: Beta.
---Arg6: bestMove so far (or something).
---Arg7: minScore so far (or something). Because this is foreach for MIN.
+--Arg1: The 3D board.
+--Arg2: All possible moves
+--Arg3: Depth.
+--Arg4: isMaxPlayer.
+--Arg5: Alpha.
+--Arg6: Beta.
+--Arg7: bestMove so far (or something).
+--Arg8: minScore so far (or something). Because this is foreach for MIN.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
-foreachBoard_min :: (Num a, Ord a) => [[[String]]] -> Int -> Bool -> a -> a -> (Int, Int, Int) -> a -> (Maybe (Int, Int, Int), a)
-foreachBoard_min [] _ _ _ _ bestMove minScore = (Just bestMove, minScore) -- No more elements.
+foreachMoves_min :: (Num a, Ord a) => [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> a -> a -> (Int, Int, Int) -> a -> (Maybe (Int, Int, Int), a)
+foreachMoves_min _ [] _ _ _ _ bestMove minScore =
+    (Just bestMove, minScore) -- No more moves.
 
-foreachBoard_min (board : remBoards) 0 isMaxPlayer alpha beta bestMove minScore = minimax board 0 isMaxPlayer alpha beta -- TODO: Depth==0, so use minimax's existing pattern? I don't know.
-    
-foreachBoard_min (board : remBoards) depth isMaxPlayer alpha beta bestMove minScore =
+foreachMoves_min board _ 0 isMaxPlayer alpha beta bestMove minScore =
+    minimax board 0 isMaxPlayer alpha beta
+    -- TODO: Depth==0, so use minimax's existing pattern? I don't know.
+
+foreachMoves_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove minScore =
     if beta <= alpha then
         (Just bestMove, minScore)
     else
-        let (curMove, curScore) = minimax board (depth - 1) (not isMaxPlayer) alpha beta
+        let (_, curScore) = minimax board (depth - 1) (not isMaxPlayer) alpha beta
         in
-            if curScore < minScore then -- Then, next iteration of foreach, but with newAlpha and newMove and newScore
+            if curScore < minScore then
+                -- curScore is better, so move is the new bestMove.
                 let newBeta = min beta curScore
-                in foreachBoard_min remBoards depth isMaxPlayer alpha newBeta (fromJust curMove) curScore
-            else -- Then, next iteration of foreach, but with existing values.
-                foreachBoard_min remBoards depth isMaxPlayer alpha beta bestMove minScore
+                in foreachMoves_min board remMoves depth isMaxPlayer alpha newBeta move curScore
+            else
+                -- Check the remaining moves, while keeping the original bestMove and minScore.
+                foreachMoves_min board remMoves depth isMaxPlayer alpha beta bestMove minScore
 
 
 --Arg1: A 3D board.
@@ -396,13 +408,11 @@ foreachBoard_min (board : remBoards) depth isMaxPlayer alpha beta bestMove minSc
 --Arg5: Beta.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
 minimax :: (Num a, Ord a) => [[String]] -> Int -> Bool -> a -> a -> (Maybe (Int, Int, Int), a)
-minimax board 0 isMaxPlayer _ _ = -- TODO: Depth == 0, therefore return heuristic estimate.
+minimax board 0 isMaxPlayer _ _ = 
+    -- Depth == 0, therefore return the heuristic estimate.
     let (player1Score, player2Score) = getHeuristicScores board
-    in
-        if isMaxPlayer then
-            (Nothing, (player2Score - player1Score)) -- TODO: I'm still not sure which one I should return...
-        else
-            (Nothing, (player1Score - player2Score)) -- TODO: I'm still not sure which one I should return...
+    in (Nothing, (player2Score - player1Score))
+    -- Player1 (human) is always minimizing, so return the score for the AI (player2).
 
 minimax board depth isMaxPlayer alpha beta =
     let outcome = getOutcome board
@@ -418,14 +428,14 @@ minimax board depth isMaxPlayer alpha beta =
         else -- outcome == (outcomeGameInProgress)
             let chip = if isMaxPlayer then (player2Char) else (player1Char)
                 allMoves = getAllPossibleMoves board
-                allBoards = map (\m -> setCell m chip board) allMoves
+                -- allBoards = map (\m -> setCell m chip board) allMoves
                 bigNum = winningScore -- TODO: Just a very big number.
                 initialBestMove = head allMoves -- TODO: Don't care? Just the first move?
             in
                 if isMaxPlayer then
-                    foreachBoard_max allBoards depth True (-bigNum) bigNum initialBestMove (-bigNum)
+                    foreachMoves_max board allMoves depth True alpha beta initialBestMove (-bigNum)
                 else
-                    foreachBoard_min allBoards depth False (-bigNum) bigNum initialBestMove (bigNum)
+                    foreachMoves_min board allMoves depth False alpha beta initialBestMove bigNum
 
 
 
@@ -523,12 +533,25 @@ getPlayerMove board = do
 
 
 
---TODO: Implement computer AI.
-getComputerMove board = do
-    --TODO: Must treat the triplets as (col, row, face).
-    --It's the same as (x,y,z), but I should think of them that way.
-    putStrLn "TODO: Computer moves at (3,2,1) (face row col)."
-    return (1,2,3) -- (col, row, face)
+--Arg1: A 3D board.
+--Ret: IO (Int, Int, Int). These are (col, row, face) of the computer.
+getComputerMove :: [[String]] -> IO (Int, Int, Int)
+getComputerMove board =
+    let boardSize = length board
+        bigNum = 2 * (getWinningScore boardSize) -- TODO: Is there an INT_MAX or something?
+        alpha = (-bigNum)
+        beta = bigNum
+        depth = 3 -- TODO: Fix hardcoded depth value. Ask for difficulty?
+        (bestMove, _) = minimax board depth True alpha beta 
+    in
+        if bestMove == Nothing then do
+            error "The game is in progress, but minimax returned Nothing as its best move. Perhaps the game should have ended?"
+        else
+            let move@(col, row, face) = (fromJust bestMove)
+                moveStr = "(" ++ (show face) ++ ", " ++ (show row) ++ ", " ++ (show col) ++ ")"
+            in do
+                putStrLn ("Computer moves at: " ++ moveStr ++ " (face row col).")
+                return move
 
 
 
