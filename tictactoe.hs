@@ -291,8 +291,8 @@ getScoresInRow row =
 getScoresInBoard2D :: Num a => [String] -> (a, a)
 getScoresInBoard2D board2D =
     let (player1ScoresList, player2ScoresList) = unzip (map (getScoresInRow) board2D)
-        player1Sum = foldr (+) 0 player1ScoresList
-        player2Sum = foldr (+) 0 player2ScoresList
+        player1Sum = sum player1ScoresList
+        player2Sum = sum player2ScoresList
         ([p1, p2], [c1, c2]) = unzip (map getScoresInRow (getDiagonals2D board2D))
         totalPlayer1 = player1Sum + p1 + p2
         totalPlayer2 = player2Sum + c1 + c2
@@ -304,8 +304,8 @@ getScoresInBoard2D board2D =
 getScoresInListOf2Dboards :: Num a => [[String]] -> (a, a)
 getScoresInListOf2Dboards listBoard2D =
     let (player1ScoresList, player2ScoresList) = unzip (map getScoresInBoard2D listBoard2D)
-        player1Sum = foldr (+) 0 player1ScoresList
-        player2Sum = foldr (+) 0 player2ScoresList
+        player1Sum = sum player1ScoresList
+        player2Sum = sum player2ScoresList
     in (player1Sum, player2Sum)
 
 
@@ -315,8 +315,8 @@ getScoresInListOf2Dboards listBoard2D =
 getScoresInDiagonals3D :: Num a => [String] -> (a, a)
 getScoresInDiagonals3D diagonals3D =
     let (player1ScoresList, player2ScoresList) = unzip (map getScoresInRow diagonals3D)
-        player1Sum = foldr (+) 0 player1ScoresList
-        player2Sum = foldr (+) 0 player2ScoresList
+        player1Sum = sum player1ScoresList
+        player2Sum = sum player2ScoresList
     in (player1Sum, player2Sum)
 
 
@@ -331,8 +331,8 @@ getHeuristicScores board =
         allBoards2D = [ud, lr, bf]
         (player1SumsList, player2SumsList) = unzip (map getScoresInListOf2Dboards allBoards2D)
         (player1Diag3Dsum, player2Diag3Dsum) = getScoresInDiagonals3D diagonals3D
-        player1BoardsSum = foldr (+) 0 player1SumsList
-        player2BoardsSum = foldr (+) 0 player2SumsList
+        player1BoardsSum = sum player1SumsList
+        player2BoardsSum = sum player2SumsList
         totalPlayer1Score = player1BoardsSum + player1Diag3Dsum
         totalPlayer2Score = player2BoardsSum + player2Diag3Dsum
     in (totalPlayer1Score, totalPlayer2Score)
