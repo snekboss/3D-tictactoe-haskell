@@ -162,7 +162,6 @@ cornerDiags cube = [f (map g cube) | f <- [diag, otherDiag], g <- [diag, otherDi
 
 
 
-
 -- ============================== getOutcome related (winning condition) ==============================
 --Arg1: A single 2D tictactoe board.
 --Ret: The two diagonals of the 2D board.
@@ -170,46 +169,34 @@ getDiagonals2D :: [String] -> [String]
 getDiagonals2D board2D = [diag board2D, otherDiag board2D]
 
 
---Arg1: A single 2D tictactoe board.
---Ret: Returns player1Char or player2Char if one of them won; otherwise returns emptyChar.
+--Arg1: Requested char.
+--Arg2: A single tictactoe row.
+--Ret: True if requested player has a win condition in this row.
+isTictactoeRow :: Char -> String -> Bool
+isTictactoeRow c row =
+    let size = length row
+    in if c == player1Char then
+        row == (replicate size player1Char)
+    else
+        row == (replicate size player2Char)
+
+
+--Arg1: Requested char.
+--Arg2: A single board 2D.
+--Ret: Returns the requestedChar if they won; otherwise returns emptyChar.
 --WARNING: Only checks horizontally and the 2 diagonals. No vertical checks.
-is2Dtictactoe :: Char -> [String] -> Char
-is2Dtictactoe c board2D =
-    let boardSize = length board2D
-        winRow = replicate boardSize c
-        horizontalWin = or (map (==winRow) board2D)
-        diagonalWin = or (map (==winRow) (getDiagonals2D board2D))
+isTictactoeBoard2D :: Char -> [String] -> Char
+isTictactoeBoard2D c board2D =
+    let horizontalWin = or (map (isTictactoeRow c) board2D)
+        diagonalWin = or (map (isTictactoeRow c) (getDiagonals2D board2D))
     in
         if horizontalWin || diagonalWin then c else emptyChar
 
 
---TODO: Try to remove duplicate code (isTictactoeRow_forPlayer1 and isTictactoeRow_forPlayer2).
---Arg1: A single tictactoe row.
---Ret: True if player1 has a win condition in this row.
-isTictactoeRow_forPlayer1 :: String -> Bool
-isTictactoeRow_forPlayer1 row =
-    let size = length row
-    in row == (replicate size player1Char)
-                               
-                               
---Arg1: A single tictactoe row.
---Ret: True if player2 has a win condition in this row.
-isTictactoeRow_forPlayer2 :: String -> Bool
-isTictactoeRow_forPlayer2 row =
-    let size = length row
-    in row == (replicate size player2Char)
-
-
---TODO: Try to remove duplicate code (is2Dtictactoe_forPlayer1 and is2Dtictactoe_forPlayer2).
 --Arg1: A list of 2D tictactoe boards.
 --Ret: True if player1 has a full row in at least one of the boards.
-is2Dtictactoe_forPlayer1 :: [[String]] -> Bool
-is2Dtictactoe_forPlayer1 boards2D = elem player1Char (map (is2Dtictactoe player1Char) boards2D)
-
---Arg1: A list of 2D tictactoe boards.
---Ret: True if player2 has a full row in at least one of the boards.
-is2Dtictactoe_forPlayer2 :: [[String]] -> Bool
-is2Dtictactoe_forPlayer2 boards2D = elem player2Char (map (is2Dtictactoe player2Char) boards2D)
+isTictactoeBoard2Dlist :: Char -> [[String]] -> Bool
+isTictactoeBoard2Dlist c boards2D = elem c (map (isTictactoeBoard2D c) boards2D)
 
 
 -- Outcomes:
@@ -233,8 +220,8 @@ getOutcome board =
         bf = getBackForwardBoards board
         diagonals3D = cornerDiags board
         allBoards2D = [ud, lr, bf]
-        player1Wins = or (map is2Dtictactoe_forPlayer1 allBoards2D) || or (map isTictactoeRow_forPlayer1 diagonals3D)
-        player2Wins = or (map is2Dtictactoe_forPlayer2 allBoards2D) || or (map isTictactoeRow_forPlayer2 diagonals3D)
+        player1Wins = or (map (isTictactoeBoard2Dlist player1Char) allBoards2D) || or (map (isTictactoeRow player1Char) diagonals3D)
+        player2Wins = or (map (isTictactoeBoard2Dlist player2Char) allBoards2D) || or (map (isTictactoeRow player2Char) diagonals3D)
         concatted = concat (concat board)
         thereAreRemainingEmptyCells = elem emptyChar concatted
     in
