@@ -45,7 +45,7 @@ showBoard board = do
 --Arg1: Dimension N of the NxNxN tic-tac-toe board.
 --Ret: An empty board. For example, dims=3, then [["---", "---", "---"], ["---", "---", "---"], ["---", "---", "---"]].
 initBoard :: Int -> [[String]]
-initBoard dims = replicate dims (replicate dims (replicate dims (emptyChar)))
+initBoard dims = replicate dims (replicate dims (replicate dims emptyChar))
 
 
 --Arg1: The size of the board
@@ -76,7 +76,7 @@ update3 (col, row, face) val grid = map_at col (map_at row (map_at face (const v
 
 
 --Arg1: A tictactoe triplet (col, row, face), where each coordinate is in the inclusive range [1, (length Arg2)].
---Arg2: (emptyChar) or (player1Char) or (player2Char).
+--Arg2: emptyChar or player1Char or player2Char.
 --Arg3: A 3D tictactoe board.
 --Ret: The new tictactoe board, where the board at the triplet's coordinates now contains Arg2's value.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
@@ -86,7 +86,7 @@ setCell (col, row, face) = update3 ((face - 1), (row - 1), (col - 1))
 
 --Arg1: A tictactoe triplet (col, row, face), where each coordinate is in the inclusive range [1, (length Arg2)].
 --Arg2: A 3D tictactoe board.
---Ret:(emptyChar) or (player1Char) or (player2Char).
+--Ret:emptyChar or player1Char or player2Char.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
 getCell :: (Int, Int, Int) -> [[String]] -> Char
 getCell (col, row, face) board = board !! (face - 1) !! (row - 1) !! (col - 1)
@@ -97,7 +97,7 @@ getCell (col, row, face) board = board !! (face - 1) !! (row - 1) !! (col - 1)
 --Ret: True if the move is available on the board.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
 isEmpty :: (Int, Int, Int) -> [[String]] -> Bool
-isEmpty triplet board = (getCell triplet board) == (emptyChar)
+isEmpty triplet board = (getCell triplet board) == emptyChar
 
 
 
@@ -171,7 +171,7 @@ getDiagonals2D board2D = [diag board2D, otherDiag board2D]
 
 
 --Arg1: A single 2D tictactoe board.
---Ret: Returns (player1Char) or (player2Char) if one of them won; otherwise returns (emptyChar).
+--Ret: Returns player1Char or player2Char if one of them won; otherwise returns emptyChar.
 --WARNING: Only checks horizontally and the 2 diagonals. No vertical checks.
 is2Dtictactoe :: Char -> [String] -> Char
 is2Dtictactoe c board2D =
@@ -180,7 +180,7 @@ is2Dtictactoe c board2D =
         horizontalWin = or (map (==winRow) board2D)
         diagonalWin = or (map (==winRow) (getDiagonals2D board2D))
     in
-        if horizontalWin || diagonalWin then c else (emptyChar)
+        if horizontalWin || diagonalWin then c else emptyChar
 
 
 --TODO: Try to remove duplicate code (isTictactoeRow_forPlayer1 and isTictactoeRow_forPlayer2).
@@ -189,7 +189,7 @@ is2Dtictactoe c board2D =
 isTictactoeRow_forPlayer1 :: String -> Bool
 isTictactoeRow_forPlayer1 row =
     let size = length row
-    in row == (replicate size (player1Char))
+    in row == (replicate size player1Char)
                                
                                
 --Arg1: A single tictactoe row.
@@ -197,19 +197,19 @@ isTictactoeRow_forPlayer1 row =
 isTictactoeRow_forPlayer2 :: String -> Bool
 isTictactoeRow_forPlayer2 row =
     let size = length row
-    in row == (replicate size (player2Char))
+    in row == (replicate size player2Char)
 
 
 --TODO: Try to remove duplicate code (is2Dtictactoe_forPlayer1 and is2Dtictactoe_forPlayer2).
 --Arg1: A list of 2D tictactoe boards.
 --Ret: True if player1 has a full row in at least one of the boards.
 is2Dtictactoe_forPlayer1 :: [[String]] -> Bool
-is2Dtictactoe_forPlayer1 boards2D = elem (player1Char) (map (is2Dtictactoe (player1Char)) boards2D)
+is2Dtictactoe_forPlayer1 boards2D = elem player1Char (map (is2Dtictactoe player1Char) boards2D)
 
 --Arg1: A list of 2D tictactoe boards.
 --Ret: True if player2 has a full row in at least one of the boards.
 is2Dtictactoe_forPlayer2 :: [[String]] -> Bool
-is2Dtictactoe_forPlayer2 boards2D = elem (player2Char) (map (is2Dtictactoe (player2Char)) boards2D)
+is2Dtictactoe_forPlayer2 boards2D = elem player2Char (map (is2Dtictactoe player2Char) boards2D)
 
 
 -- Outcomes:
@@ -221,10 +221,10 @@ outcomeDraw = 3
 
 --Arg1: The 3D board.
 {-Ret:
-(outcomeGameInProgress),
-(outcomePlayer1Wins),
-(outcomePlayer2Wins),
-(outcomeDraw).
+outcomeGameInProgress,
+outcomePlayer1Wins,
+outcomePlayer2Wins,
+outcomeDraw.
 -}
 getOutcome :: [[String]] -> Int
 getOutcome board =
@@ -236,12 +236,12 @@ getOutcome board =
         player1Wins = or (map is2Dtictactoe_forPlayer1 allBoards2D) || or (map isTictactoeRow_forPlayer1 diagonals3D)
         player2Wins = or (map is2Dtictactoe_forPlayer2 allBoards2D) || or (map isTictactoeRow_forPlayer2 diagonals3D)
         concatted = concat (concat board)
-        thereAreRemainingEmptyCells = elem (emptyChar) concatted
+        thereAreRemainingEmptyCells = elem emptyChar concatted
     in
-        if player1Wins then (outcomePlayer1Wins)
-        else if player2Wins then (outcomePlayer2Wins)
-        else if thereAreRemainingEmptyCells then (outcomeGameInProgress)
-        else (outcomeDraw)
+        if player1Wins then outcomePlayer1Wins
+        else if player2Wins then outcomePlayer2Wins
+        else if thereAreRemainingEmptyCells then outcomeGameInProgress
+        else outcomeDraw
 
 
 
@@ -267,15 +267,15 @@ countToScore count boardSize =
 
 
 
---Arg1: (player1Char) or (player2Char)
+--Arg1: player1Char or player2Char
 --Arg2: A single row.
 --Ret: Score of the requested player.
 getScoresInRow :: Char -> String -> Int
 getScoresInRow requestedChar row =
     let boardSize = length row
-        player1Count = length [p | p <- row, p == (player1Char)]
+        player1Count = length [p | p <- row, p == player1Char]
         player1Score = countToScore player1Count boardSize
-        player2Count = length [c | c <- row, c == (player2Char)]
+        player2Count = length [c | c <- row, c == player2Char]
         player2Score = countToScore player2Count boardSize
     in
         if player1Count > 0 && player2Count > 0 then
@@ -286,7 +286,7 @@ getScoresInRow requestedChar row =
             player2Score
                          
 
---Arg1: (player1Char) or (player2Char)
+--Arg1: player1Char or player2Char
 --Arg2: A single board 2D.
 --Ret: Score of the requested player.
 getScoresInBoard2D :: Char -> [String] -> Int
@@ -297,21 +297,21 @@ getScoresInBoard2D c board2D =
     in totalScore
 
 
---Arg1: (player1Char) or (player2Char)
+--Arg1: player1Char or player2Char
 --Arg2: A list of 2D boards.
 --Ret: Score of the requested player.
 getScoresInListOf2Dboards :: Char -> [[String]] -> Int
 getScoresInListOf2Dboards c listBoard2D = sum (map (getScoresInBoard2D c) listBoard2D)
 
 
---Arg1: (player1Char) or (player2Char)
+--Arg1: player1Char or player2Char
 --Arg2: A list of 3D diagonals.
 --Ret: Score of the requested player.
 getScoresInDiagonals3D :: Char -> [String] -> Int
 getScoresInDiagonals3D c diagonals3D = sum (map (getScoresInRow c) diagonals3D)
 
 
---Arg1: (player1Char) or (player2Char)
+--Arg1: player1Char or player2Char
 --Arg2: Board 3D.
 --Ret: Score of the requested player.
 getHeuristicScores :: Char -> [[String]] -> Int
@@ -428,14 +428,14 @@ minimax board depth isMaxPlayer alpha beta =
     in 
         -- TODO: Replace the if checks with "case",
         -- but without Haskell complaining about redundant stuff.
-        if outcome == (outcomePlayer1Wins) then
+        if outcome == outcomePlayer1Wins then
             (Nothing, (-1) * winningScore)
-        else if outcome == (outcomePlayer2Wins) then
+        else if outcome == outcomePlayer2Wins then
             (Nothing, winningScore)
-        else if outcome == (outcomeDraw) then
+        else if outcome == outcomeDraw then
             (Nothing, 0)
-        else -- outcome == (outcomeGameInProgress)
-            let chip = if isMaxPlayer then (player2Char) else (player1Char)
+        else -- outcome == outcomeGameInProgress
+            let chip = if isMaxPlayer then player2Char else player1Char
                 allMoves = getAllPossibleMoves board
                 -- allBoards = map (\m -> setCell m chip board) allMoves
                 bigNum = winningScore -- TODO: Just a very big number.
@@ -572,18 +572,18 @@ getComputerMove board =
 
 
 
---WARNING: Do not call this function if (outcomeGameInProgress)
+--WARNING: Do not call this function if outcomeGameInProgress
 --Desc: Announces the winner.
 --Arg1: outcome.
 --Ret: IO ()
 announceWinner :: Int -> IO ()
 announceWinner 0 = error "ERROR: Trying to announceWinner while the game is still in progress."
 announceWinner outcome =
-    if outcome == (outcomePlayer1Wins) then do
+    if outcome == outcomePlayer1Wins then do
         putStrLn "Player wins!"
-    else if outcome == (outcomePlayer2Wins) then do
+    else if outcome == outcomePlayer2Wins then do
         putStrLn "Computer wins!"
-    else do {- (outcomeDraw) -}
+    else do {- outcomeDraw -}
         putStrLn "It's a draw!"
 
 
@@ -598,7 +598,7 @@ gameLoop player board =
              in
                  if outcome == 0 then do
                      showBoard board
-                     if player == (player1) then do
+                     if player == player1 then do
                          playerMove <- getPlayerMove board
                          let newBoard = setCell playerMove player1Char board
                              in gameLoop (3 - player) newBoard
