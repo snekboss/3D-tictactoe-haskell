@@ -262,75 +262,69 @@ countToScore :: Int -> Int -> Int
 countToScore count boardSize =
     if count == boardSize then
         fromIntegral (getWinningScore boardSize) -- Win condition satisfied.
-    else fromIntegral (boardSize ^ count) -- TODO: Need a nice non-linear mapping.
+    else fromIntegral (boardSize ^ count)
 
 
 
---Arg1: A single row.
---Ret: A tuple (player1Score, player2Score).
-getScoresInRow :: String -> (Int, Int)
-getScoresInRow row =
+
+--Arg1: (player1Char) or (player2Char)
+--Arg2: A single row.
+--Ret: Score of the requested player.
+getScoresInRow :: Char -> String -> Int
+getScoresInRow requestedChar row =
     let boardSize = length row
         player1Count = length [p | p <- row, p == (player1Char)]
         player1Score = countToScore player1Count boardSize
         player2Count = length [c | c <- row, c == (player2Char)]
         player2Score = countToScore player2Count boardSize
     in
-        if player1Count > 0 && player2Count > 0 then (0, 0) -- Nobody can win in this row.
-        else (player1Score, player2Score)
+        if player1Count > 0 && player2Count > 0 then
+            0 -- Nobody can win in this row.
+        else if requestedChar == player1Char then
+            player1Score
+        else
+            player2Score
                          
-                         
 
---Arg1: A single board 2D.
---Ret: A tuple (player1Sum, player2Sum).
-getScoresInBoard2D :: [String] -> (Int, Int)
-getScoresInBoard2D board2D =
-    let (player1ScoresList, player2ScoresList) = unzip (map (getScoresInRow) board2D)
-        player1Sum = sum player1ScoresList
-        player2Sum = sum player2ScoresList
-        ([p1, p2], [c1, c2]) = unzip (map getScoresInRow (getDiagonals2D board2D))
-        totalPlayer1 = player1Sum + p1 + p2
-        totalPlayer2 = player2Sum + c1 + c2
-    in (totalPlayer1, totalPlayer2)
+--Arg1: (player1Char) or (player2Char)
+--Arg2: A single board 2D.
+--Ret: Score of the requested player.
+getScoresInBoard2D :: Char -> [String] -> Int
+getScoresInBoard2D c board2D =
+    let scoreSum = sum (map (getScoresInRow c) board2D)
+        [d1, d2] = map (getScoresInRow c) (getDiagonals2D board2D)
+        totalScore = scoreSum + d1 + d2
+    in totalScore
 
 
---Arg1: A list of 2D boards.
---Ret: A tuple (player1Sum, player2Sum)
-getScoresInListOf2Dboards :: [[String]] -> (Int, Int)
-getScoresInListOf2Dboards listBoard2D =
-    let (player1ScoresList, player2ScoresList) = unzip (map getScoresInBoard2D listBoard2D)
-        player1Sum = sum player1ScoresList
-        player2Sum = sum player2ScoresList
-    in (player1Sum, player2Sum)
+--Arg1: (player1Char) or (player2Char)
+--Arg2: A list of 2D boards.
+--Ret: Score of the requested player.
+getScoresInListOf2Dboards :: Char -> [[String]] -> Int
+getScoresInListOf2Dboards c listBoard2D = sum (map (getScoresInBoard2D c) listBoard2D)
 
 
-
---Arg1: A list of 3D diagonals.
---Ret: A tuple (player1Sum, player2Sum).
-getScoresInDiagonals3D :: [String] -> (Int, Int)
-getScoresInDiagonals3D diagonals3D =
-    let (player1ScoresList, player2ScoresList) = unzip (map getScoresInRow diagonals3D)
-        player1Sum = sum player1ScoresList
-        player2Sum = sum player2ScoresList
-    in (player1Sum, player2Sum)
+--Arg1: (player1Char) or (player2Char)
+--Arg2: A list of 3D diagonals.
+--Ret: Score of the requested player.
+getScoresInDiagonals3D :: Char -> [String] -> Int
+getScoresInDiagonals3D c diagonals3D = sum (map (getScoresInRow c) diagonals3D)
 
 
---Arg1: Board 3D.
---Ret: A tuple (player1Score, player2Score).
-getHeuristicScores :: [[String]] -> (Int, Int)
-getHeuristicScores board =
+--Arg1: (player1Char) or (player2Char)
+--Arg2: Board 3D.
+--Ret: Score of the requested player.
+getHeuristicScores :: Char -> [[String]] -> Int
+getHeuristicScores c board =
     let ud = getUpDownBoards board
         lr = getLeftRightBoards board
         bf = getBackForwardBoards board
         diagonals3D = cornerDiags board
         allBoards2D = [ud, lr, bf]
-        (player1SumsList, player2SumsList) = unzip (map getScoresInListOf2Dboards allBoards2D)
-        (player1Diag3Dsum, player2Diag3Dsum) = getScoresInDiagonals3D diagonals3D
-        player1BoardsSum = sum player1SumsList
-        player2BoardsSum = sum player2SumsList
-        totalPlayer1Score = player1BoardsSum + player1Diag3Dsum
-        totalPlayer2Score = player2BoardsSum + player2Diag3Dsum
-    in (totalPlayer1Score, totalPlayer2Score)
+        scoreSum = sum (map (getScoresInListOf2Dboards c) allBoards2D)
+        diag3Dsum = getScoresInDiagonals3D c diagonals3D
+        totalScore = scoreSum + diag3Dsum
+    in totalScore
 
 
 
@@ -354,6 +348,7 @@ getAllPossibleMoves board =
 --Arg8: maxScore so far (or something). Because this is foreach for MAX.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
 foreachMoves_max :: [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
+
 foreachMoves_max _ [] _ _ _ _ bestMove maxScore =
     (Just bestMove, maxScore) -- No more moves.
 
@@ -369,10 +364,12 @@ foreachMoves_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove m
         in
             if curScore > maxScore then
                 -- curScore is better, so move is the new bestMove.
+                -- Check the remaining moves.
                 let newAlpha = max alpha curScore
                 in foreachMoves_max board remMoves depth isMaxPlayer newAlpha beta move curScore
             else
-                -- Check the remaining moves, while keeping the original bestMove and maxScore.
+                -- Existing bestMove and maxScore are better. Keep them.
+                -- Check the remaining moves.
                 foreachMoves_max board remMoves depth isMaxPlayer alpha beta bestMove maxScore
 
 
@@ -401,10 +398,12 @@ foreachMoves_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove m
         in
             if curScore < minScore then
                 -- curScore is better, so move is the new bestMove.
+                -- Check the remaining moves.
                 let newBeta = min beta curScore
                 in foreachMoves_min board remMoves depth isMaxPlayer alpha newBeta move curScore
             else
-                -- Check the remaining moves, while keeping the original bestMove and minScore.
+                -- Existing bestMove and minScore are better. Keep them.
+                -- Check the remaining moves.
                 foreachMoves_min board remMoves depth isMaxPlayer alpha beta bestMove minScore
 
 
@@ -417,7 +416,8 @@ foreachMoves_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove m
 minimax :: [[String]] -> Int -> Bool -> Int -> Int -> (Maybe (Int, Int, Int), Int)
 minimax board 0 isMaxPlayer _ _ = 
     -- Depth == 0, therefore return the heuristic estimate.
-    let (player1Score, player2Score) = getHeuristicScores board
+    let player1Score = getHeuristicScores player1Char board
+        player2Score = getHeuristicScores player2Char board
     in (Nothing, (player2Score - player1Score))
     -- Player1 (human) is always minimizing, so return the score for the AI (player2).
 
@@ -425,10 +425,12 @@ minimax board depth isMaxPlayer alpha beta =
     let outcome = getOutcome board
         boardSize = length board
         winningScore = getWinningScore boardSize
-    in
-        if outcome == (outcomePlayer1Wins) then -- TODO: Is this "IsMinPlayer"?
+    in 
+        -- TODO: Replace the if checks with "case",
+        -- but without Haskell complaining about redundant stuff.
+        if outcome == (outcomePlayer1Wins) then
             (Nothing, (-1) * winningScore)
-        else if outcome == (outcomePlayer2Wins) then -- TODO: Is this "IsMaxPlayer"?
+        else if outcome == (outcomePlayer2Wins) then
             (Nothing, winningScore)
         else if outcome == (outcomeDraw) then
             (Nothing, 0)
@@ -613,6 +615,7 @@ gameLoop player board =
 
 
 -- ================================================== TESTS (delete later plz) ==================================================
+{-
 debug_getAlphabetBoard = [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["stu", "vwx", "yz#"]]
 
 debug_getAlphabetBoard_LeftRight = [["adg", "jmp", "svy"], ["beh", "knq", "twz"], ["cfi", "lor", "ux#"]]
@@ -722,3 +725,4 @@ testHeurCorner = getHeuristicScores (setCell (1,1,1) 'X' (initBoard 3))
 
 testHeur2 = getHeuristicScores (setCell (2,1,1) 'X' (setCell (1,1,1) 'X' (initBoard 3)))
 testHeur3 = getHeuristicScores (setCell (3,1,1) 'X' (setCell (2,1,1) 'X' (setCell (1,1,1) 'X' (initBoard 3))))
+-}
