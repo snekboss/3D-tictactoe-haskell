@@ -251,18 +251,14 @@ getOutcome board =
 
 --Arg1: Board size.
 --Ret: The score of the winning condition (a big number).
-getWinningScore :: (Num a, Ord a) => Int -> a
-getWinningScore boardSize = fromIntegral (boardSize ^ boardSize) ^ boardSize
+getWinningScore :: Int -> Int
+getWinningScore boardSize = (boardSize ^ boardSize) ^ boardSize
 
 
---TODO: What kind of a countToScore mapping?
---      Maybe assume that the opposing player has no chips on the row.
---      So count==0 would not mean "no score". It'd mean that "the row is completely empty",
---      and so maybe it deserves to get some score > 0.
 --Arg1: Number of chips of a certain player.
 --Arg2: The size of the board.
 --Ret: A score value (preferably non-linear) WRT the count and boardSize.
-countToScore :: Num a => Int -> Int -> a
+countToScore :: Int -> Int -> Int
 countToScore count boardSize =
     if count == boardSize then
         fromIntegral (getWinningScore boardSize) -- Win condition satisfied.
@@ -272,7 +268,7 @@ countToScore count boardSize =
 
 --Arg1: A single row.
 --Ret: A tuple (player1Score, player2Score).
-getScoresInRow :: Num a => String -> (a, a)
+getScoresInRow :: String -> (Int, Int)
 getScoresInRow row =
     let boardSize = length row
         player1Count = length [p | p <- row, p == (player1Char)]
@@ -280,7 +276,6 @@ getScoresInRow row =
         player2Count = length [c | c <- row, c == (player2Char)]
         player2Score = countToScore player2Count boardSize
     in
-        -- TODO: Should I remove this if check? Is it bad?
         if player1Count > 0 && player2Count > 0 then (0, 0) -- Nobody can win in this row.
         else (player1Score, player2Score)
                          
@@ -288,7 +283,7 @@ getScoresInRow row =
 
 --Arg1: A single board 2D.
 --Ret: A tuple (player1Sum, player2Sum).
-getScoresInBoard2D :: Num a => [String] -> (a, a)
+getScoresInBoard2D :: [String] -> (Int, Int)
 getScoresInBoard2D board2D =
     let (player1ScoresList, player2ScoresList) = unzip (map (getScoresInRow) board2D)
         player1Sum = sum player1ScoresList
@@ -301,7 +296,7 @@ getScoresInBoard2D board2D =
 
 --Arg1: A list of 2D boards.
 --Ret: A tuple (player1Sum, player2Sum)
-getScoresInListOf2Dboards :: Num a => [[String]] -> (a, a)
+getScoresInListOf2Dboards :: [[String]] -> (Int, Int)
 getScoresInListOf2Dboards listBoard2D =
     let (player1ScoresList, player2ScoresList) = unzip (map getScoresInBoard2D listBoard2D)
         player1Sum = sum player1ScoresList
@@ -312,7 +307,7 @@ getScoresInListOf2Dboards listBoard2D =
 
 --Arg1: A list of 3D diagonals.
 --Ret: A tuple (player1Sum, player2Sum).
-getScoresInDiagonals3D :: Num a => [String] -> (a, a)
+getScoresInDiagonals3D :: [String] -> (Int, Int)
 getScoresInDiagonals3D diagonals3D =
     let (player1ScoresList, player2ScoresList) = unzip (map getScoresInRow diagonals3D)
         player1Sum = sum player1ScoresList
@@ -322,7 +317,7 @@ getScoresInDiagonals3D diagonals3D =
 
 --Arg1: Board 3D.
 --Ret: A tuple (player1Score, player2Score).
-getHeuristicScores :: Num a => [[String]] -> (a, a)
+getHeuristicScores :: [[String]] -> (Int, Int)
 getHeuristicScores board =
     let ud = getUpDownBoards board
         lr = getLeftRightBoards board
@@ -358,7 +353,7 @@ getAllPossibleMoves board =
 --Arg7: bestMove so far (or something).
 --Arg8: maxScore so far (or something). Because this is foreach for MAX.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
-foreachMoves_max :: (Num a, Ord a) => [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> a -> a -> (Int, Int, Int) -> a -> (Maybe (Int, Int, Int), a)
+foreachMoves_max :: [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
 foreachMoves_max _ [] _ _ _ _ bestMove maxScore =
     (Just bestMove, maxScore) -- No more moves.
 
@@ -390,7 +385,7 @@ foreachMoves_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove m
 --Arg7: bestMove so far (or something).
 --Arg8: minScore so far (or something). Because this is foreach for MIN.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
-foreachMoves_min :: (Num a, Ord a) => [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> a -> a -> (Int, Int, Int) -> a -> (Maybe (Int, Int, Int), a)
+foreachMoves_min :: [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
 foreachMoves_min _ [] _ _ _ _ bestMove minScore =
     (Just bestMove, minScore) -- No more moves.
 
@@ -419,7 +414,7 @@ foreachMoves_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove m
 --Arg4: Alpha.
 --Arg5: Beta.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
-minimax :: (Num a, Ord a) => [[String]] -> Int -> Bool -> a -> a -> (Maybe (Int, Int, Int), a)
+minimax :: [[String]] -> Int -> Bool -> Int -> Int -> (Maybe (Int, Int, Int), Int)
 minimax board 0 isMaxPlayer _ _ = 
     -- Depth == 0, therefore return the heuristic estimate.
     let (player1Score, player2Score) = getHeuristicScores board
