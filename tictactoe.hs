@@ -434,6 +434,24 @@ minimax board depth isMaxPlayer alpha beta =
                     foreachMoves_min board allMoves depth False alpha beta initialBestMove bigNum
 
 
+{-
+        case outcome of
+            outcomePlayer1Wins -> (Nothing, (-1) * winningScore)
+            outcomePlayer2Wins -> (Nothing, winningScore)
+            outcomeDraw -> (Nothing, 0)
+            outcomeGameInProgress ->
+                let chip = if isMaxPlayer then player2Char else player1Char
+                    allMoves = getAllPossibleMoves board
+                    -- allBoards = map (\m -> setCell m chip board) allMoves
+                    bigNum = winningScore -- TODO: Just a very big number.
+                    initialBestMove = head allMoves -- TODO: Don't care? Just the first move?
+                in
+                    if isMaxPlayer then
+                        foreachMoves_max board allMoves depth True alpha beta initialBestMove (-bigNum)
+                    else
+                        foreachMoves_min board allMoves depth False alpha beta initialBestMove bigNum
+-}
+
 
 
 -- ============================== Game loop, etc. ==============================
