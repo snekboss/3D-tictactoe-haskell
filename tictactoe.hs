@@ -61,8 +61,9 @@ isOutOfBounds size (col, row, face) = col < 1 || row < 1 || face < 1 || col > si
 --Arg3: The input list.
 --Ret: Same list, but with the function applied at the i'th element.
 map_at :: Int -> (a -> a) -> [a] -> [a]
-map_at i f list = let (prevElems, target : remElems) = splitAt i list
-                  in prevElems ++ (f target : remElems)
+map_at i f list =
+    let (prevElems, target : remElems) = splitAt i list
+    in prevElems ++ (f target : remElems)
 
 
 --Desc: Update element (col, row, face) of a three-dimensional array.
@@ -173,26 +174,30 @@ getDiagonals2D board2D = [diag board2D, otherDiag board2D]
 --Ret: Returns (player1Char) or (player2Char) if one of them won; otherwise returns (emptyChar).
 --WARNING: Only checks horizontally and the 2 diagonals. No vertical checks.
 is2Dtictactoe :: Char -> [String] -> Char
-is2Dtictactoe c board2D = let boardSize = length board2D
-                              winRow = replicate boardSize c
-                              horizontalWin = or (map (==winRow) board2D)
-                              diagonalWin = or (map (==winRow) (getDiagonals2D board2D))
-                          in
-                              if horizontalWin || diagonalWin then c else (emptyChar)
+is2Dtictactoe c board2D =
+    let boardSize = length board2D
+        winRow = replicate boardSize c
+        horizontalWin = or (map (==winRow) board2D)
+        diagonalWin = or (map (==winRow) (getDiagonals2D board2D))
+    in
+        if horizontalWin || diagonalWin then c else (emptyChar)
 
 
 --TODO: Try to remove duplicate code (isTictactoeRow_forPlayer1 and isTictactoeRow_forPlayer2).
 --Arg1: A single tictactoe row.
 --Ret: True if player1 has a win condition in this row.
 isTictactoeRow_forPlayer1 :: String -> Bool
-isTictactoeRow_forPlayer1 row = let size = length row
-                               in row == (replicate size (player1Char))
+isTictactoeRow_forPlayer1 row =
+    let size = length row
+    in row == (replicate size (player1Char))
+                               
                                
 --Arg1: A single tictactoe row.
 --Ret: True if player2 has a win condition in this row.
 isTictactoeRow_forPlayer2 :: String -> Bool
-isTictactoeRow_forPlayer2 row = let size = length row
-                                 in row == (replicate size (player2Char))
+isTictactoeRow_forPlayer2 row =
+    let size = length row
+    in row == (replicate size (player2Char))
 
 
 --TODO: Try to remove duplicate code (is2Dtictactoe_forPlayer1 and is2Dtictactoe_forPlayer2).
@@ -222,20 +227,21 @@ outcomeDraw = 3
 (outcomeDraw).
 -}
 getOutcome :: [[String]] -> Int
-getOutcome board = let ud = getUpDownBoards board
-                       lr = getLeftRightBoards board --this is actually doing what I thought back-forward was meant to do (vertical checks)
-                       bf = getBackForwardBoards board
-                       diagonals3D = cornerDiags board
-                       allBoards2D = [ud, lr, bf]
-                       player1Wins = or (map is2Dtictactoe_forPlayer1 allBoards2D) || or (map isTictactoeRow_forPlayer1 diagonals3D)
-                       player2Wins = or (map is2Dtictactoe_forPlayer2 allBoards2D) || or (map isTictactoeRow_forPlayer2 diagonals3D)
-                       concatted = concat (concat board)
-                       thereAreRemainingEmptyCells = elem (emptyChar) concatted
-                    in
-                        if player1Wins then (outcomePlayer1Wins)
-                        else if player2Wins then (outcomePlayer2Wins)
-                        else if thereAreRemainingEmptyCells then (outcomeGameInProgress)
-                        else (outcomeDraw)
+getOutcome board =
+    let ud = getUpDownBoards board
+        lr = getLeftRightBoards board --this is actually doing what I thought back-forward was meant to do (vertical checks)
+        bf = getBackForwardBoards board
+        diagonals3D = cornerDiags board
+        allBoards2D = [ud, lr, bf]
+        player1Wins = or (map is2Dtictactoe_forPlayer1 allBoards2D) || or (map isTictactoeRow_forPlayer1 diagonals3D)
+        player2Wins = or (map is2Dtictactoe_forPlayer2 allBoards2D) || or (map isTictactoeRow_forPlayer2 diagonals3D)
+        concatted = concat (concat board)
+        thereAreRemainingEmptyCells = elem (emptyChar) concatted
+    in
+        if player1Wins then (outcomePlayer1Wins)
+        else if player2Wins then (outcomePlayer2Wins)
+        else if thereAreRemainingEmptyCells then (outcomeGameInProgress)
+        else (outcomeDraw)
 
 
 
@@ -257,73 +263,79 @@ getWinningScore boardSize = fromIntegral (boardSize ^ boardSize) ^ boardSize
 --Arg2: The size of the board.
 --Ret: A score value (preferably non-linear) WRT the count and boardSize.
 countToScore :: Num a => Int -> Int -> a
-countToScore count boardSize = if count == boardSize then
-                                   fromIntegral (getWinningScore boardSize) -- Win condition satisfied.
-                               else fromIntegral (boardSize ^ count) -- TODO: Need a nice non-linear mapping.
+countToScore count boardSize =
+    if count == boardSize then
+        fromIntegral (getWinningScore boardSize) -- Win condition satisfied.
+    else fromIntegral (boardSize ^ count) -- TODO: Need a nice non-linear mapping.
 
 
 
 --Arg1: A single row.
 --Ret: A tuple (player1Score, player2Score).
 getScoresInRow :: Num a => String -> (a, a)
-getScoresInRow row = let boardSize = length row
-                         player1Count = length [p | p <- row, p == (player1Char)]
-                         player1Score = countToScore player1Count boardSize
-                         player2Count = length [c | c <- row, c == (player2Char)]
-                         player2Score = countToScore player2Count boardSize
-                     in
-                         -- TODO: Should I remove this if check? Is it bad?
-                         if player1Count > 0 && player2Count > 0 then (0, 0) -- Nobody can win in this row.
-                         else (player1Score, player2Score)
+getScoresInRow row =
+    let boardSize = length row
+        player1Count = length [p | p <- row, p == (player1Char)]
+        player1Score = countToScore player1Count boardSize
+        player2Count = length [c | c <- row, c == (player2Char)]
+        player2Score = countToScore player2Count boardSize
+    in
+        -- TODO: Should I remove this if check? Is it bad?
+        if player1Count > 0 && player2Count > 0 then (0, 0) -- Nobody can win in this row.
+        else (player1Score, player2Score)
                          
                          
 
 --Arg1: A single board 2D.
 --Ret: A tuple (player1Sum, player2Sum).
 getScoresInBoard2D :: Num a => [String] -> (a, a)
-getScoresInBoard2D board2D = let (player1ScoresList, player2ScoresList) = unzip (map (getScoresInRow) board2D)
-                                 player1Sum = foldr (+) 0 player1ScoresList
-                                 player2Sum = foldr (+) 0 player2ScoresList
-                                 ([p1, p2], [c1, c2]) = unzip (map getScoresInRow (getDiagonals2D board2D))
-                                 totalPlayer1 = player1Sum + p1 + p2
-                                 totalPlayer2 = player2Sum + c1 + c2
-                             in (totalPlayer1, totalPlayer2)
+getScoresInBoard2D board2D =
+    let (player1ScoresList, player2ScoresList) = unzip (map (getScoresInRow) board2D)
+        player1Sum = foldr (+) 0 player1ScoresList
+        player2Sum = foldr (+) 0 player2ScoresList
+        ([p1, p2], [c1, c2]) = unzip (map getScoresInRow (getDiagonals2D board2D))
+        totalPlayer1 = player1Sum + p1 + p2
+        totalPlayer2 = player2Sum + c1 + c2
+    in (totalPlayer1, totalPlayer2)
 
 
 --Arg1: A list of 2D boards.
 --Ret: A tuple (player1Sum, player2Sum)
 getScoresInListOf2Dboards :: Num a => [[String]] -> (a, a)
-getScoresInListOf2Dboards listBoard2D = let (player1ScoresList, player2ScoresList) = unzip (map getScoresInBoard2D listBoard2D)
-                                            player1Sum = foldr (+) 0 player1ScoresList
-                                            player2Sum = foldr (+) 0 player2ScoresList
-                                        in (player1Sum, player2Sum)
+getScoresInListOf2Dboards listBoard2D =
+    let (player1ScoresList, player2ScoresList) = unzip (map getScoresInBoard2D listBoard2D)
+        player1Sum = foldr (+) 0 player1ScoresList
+        player2Sum = foldr (+) 0 player2ScoresList
+    in (player1Sum, player2Sum)
 
 
 
 --Arg1: A list of 3D diagonals.
 --Ret: A tuple (player1Sum, player2Sum).
 getScoresInDiagonals3D :: Num a => [String] -> (a, a)
-getScoresInDiagonals3D diagonals3D = let (player1ScoresList, player2ScoresList) = unzip (map getScoresInRow diagonals3D)
-                                         player1Sum = foldr (+) 0 player1ScoresList
-                                         player2Sum = foldr (+) 0 player2ScoresList
-                                     in (player1Sum, player2Sum)
+getScoresInDiagonals3D diagonals3D =
+    let (player1ScoresList, player2ScoresList) = unzip (map getScoresInRow diagonals3D)
+        player1Sum = foldr (+) 0 player1ScoresList
+        player2Sum = foldr (+) 0 player2ScoresList
+    in (player1Sum, player2Sum)
 
 
 --Arg1: Board 3D.
 --Ret: A tuple (player1Score, player2Score).
 getHeuristicScores :: Num a => [[String]] -> (a, a)
-getHeuristicScores board = let ud = getUpDownBoards board
-                               lr = getLeftRightBoards board
-                               bf = getBackForwardBoards board
-                               diagonals3D = cornerDiags board
-                               allBoards2D = [ud, lr, bf]
-                               (player1SumsList, player2SumsList) = unzip (map getScoresInListOf2Dboards allBoards2D)
-                               (player1Diag3Dsum, player2Diag3Dsum) = getScoresInDiagonals3D diagonals3D
-                               player1BoardsSum = foldr (+) 0 player1SumsList
-                               player2BoardsSum = foldr (+) 0 player2SumsList
-                               totalPlayer1Score = player1BoardsSum + player1Diag3Dsum
-                               totalPlayer2Score = player2BoardsSum + player2Diag3Dsum
-                           in (totalPlayer1Score, totalPlayer2Score)
+getHeuristicScores board =
+    let ud = getUpDownBoards board
+        lr = getLeftRightBoards board
+        bf = getBackForwardBoards board
+        diagonals3D = cornerDiags board
+        allBoards2D = [ud, lr, bf]
+        (player1SumsList, player2SumsList) = unzip (map getScoresInListOf2Dboards allBoards2D)
+        (player1Diag3Dsum, player2Diag3Dsum) = getScoresInDiagonals3D diagonals3D
+        player1BoardsSum = foldr (+) 0 player1SumsList
+        player2BoardsSum = foldr (+) 0 player2SumsList
+        totalPlayer1Score = player1BoardsSum + player1Diag3Dsum
+        totalPlayer2Score = player2BoardsSum + player2Diag3Dsum
+    in (totalPlayer1Score, totalPlayer2Score)
 
 
 
@@ -445,7 +457,8 @@ minimax board depth isMaxPlayer alpha beta =
 --Asks the size of the board.
 --Ret: IO Int. Use the "<-" operator when working with this function.
 askBoardSize :: IO Int
-askBoardSize = do
+askBoardSize =
+    do
         putStr "Enter board size: "
         input <- getLine
         let dims = readMaybe input :: Maybe Int
@@ -464,7 +477,8 @@ askBoardSize = do
 --Asks who should start first. Human (player1) or computer (player2).
 --Ret: IO Int. Use the "<-" operator when working with this function.
 askStarterPlayer :: IO Int
-askStarterPlayer = do
+askStarterPlayer =
+    do
         putStrLn "Would you like to start first? (y/n)"
         answer <- getLine
         if answer == "y" || answer == "Y" then do
@@ -479,10 +493,11 @@ askStarterPlayer = do
 --Desc: This is how you start the game.
 --Ret: IO ().
 run :: IO ()
-run = do
-    size <- askBoardSize
-    starter <- askStarterPlayer
-    gameStart starter (initBoard size)
+run =
+    do
+        size <- askBoardSize
+        starter <- askStarterPlayer
+        gameStart starter (initBoard size)
 
 
 --Desc: Do game initialization stuff here.
@@ -490,7 +505,8 @@ run = do
 --Arg2: The 3D board.
 --Ret: IO ().
 gameStart :: Int -> [[String]] -> IO ()
-gameStart player board = do
+gameStart player board =
+    do
         gameLoop player board
 
 
@@ -502,7 +518,8 @@ gameStart player board = do
 --Arg1: The 3D board.
 --Ret: IO (Int, Int, Int). These are (col, row, face). Yes, it's reversed.
 getPlayerMove :: [[String]] -> IO (Int, Int, Int)
-getPlayerMove board = do
+getPlayerMove board =
+    do
         putStr "Your move (face row col)?: "
         input <- getLine
         let maybeNums = map readMaybe (words input) :: [Maybe Int]
@@ -578,8 +595,9 @@ announceWinner outcome =
 --Arg2: The current state of the game board.
 --Ret: IO ()
 gameLoop :: Int -> [[String]] -> IO ()
-gameLoop player board = do
-         let outcome = getOutcome board
+gameLoop player board =
+    do
+        let outcome = getOutcome board
              in
                  if outcome == 0 then do
                      showBoard board
@@ -606,14 +624,16 @@ debug_getAlphabetBoard_LeftRight = [["adg", "jmp", "svy"], ["beh", "knq", "twz"]
 debug_getAlphabetBoard_BackForward = [["abc", "jkl", "stu"], ["def", "mno", "vwx"], ["ghi", "pqr", "yz#"]]
 
 
-unitTest_LeftRight = let defaultBoard = debug_getAlphabetBoard
-                         leftRight2DBoards = getLeftRightBoards defaultBoard
-                         in leftRight2DBoards == debug_getAlphabetBoard_LeftRight
+unitTest_LeftRight =
+    let defaultBoard = debug_getAlphabetBoard
+        leftRight2DBoards = getLeftRightBoards defaultBoard
+    in leftRight2DBoards == debug_getAlphabetBoard_LeftRight
 
 
-unitTest_BackForward = let defaultBoard = debug_getAlphabetBoard
-                           backForward2DBoards = getBackForwardBoards defaultBoard
-                           in backForward2DBoards == debug_getAlphabetBoard_BackForward
+unitTest_BackForward =
+    let defaultBoard = debug_getAlphabetBoard
+        backForward2DBoards = getBackForwardBoards defaultBoard
+    in backForward2DBoards == debug_getAlphabetBoard_BackForward
                            
 
 debug_showBoard board = do
