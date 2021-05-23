@@ -334,30 +334,30 @@ getAllPossibleMoves board =
 --Arg7: bestMove so far (or something).
 --Arg8: maxScore so far (or something). Because this is foreach for MAX.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
-foreachMoves_max :: [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
+foreachMove_max :: [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
 
-foreachMoves_max _ [] _ _ _ _ bestMove maxScore =
+foreachMove_max _ [] _ _ _ _ bestMove maxScore =
     (Just bestMove, maxScore) -- No more moves.
 
-foreachMoves_max board _ 0 isMaxPlayer alpha beta bestMove maxScore =
+foreachMove_max board _ 0 isMaxPlayer alpha beta bestMove maxScore =
     minimax board 0 isMaxPlayer alpha beta
     -- TODO: Depth==0, so use minimax's existing pattern? I don't know.
 
-foreachMoves_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove maxScore =
+foreachMove_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove maxScore =
     if beta <= alpha then
         (Just bestMove, maxScore)
     else
         let (_, curScore) = minimax board (depth - 1) (not isMaxPlayer) alpha beta
         in
-            if curScore > maxScore then
+            if curScore > maxScore then -- TODO: Perhaps this should be >= rather than just >?
                 -- curScore is better, so move is the new bestMove.
                 -- Check the remaining moves.
                 let newAlpha = max alpha curScore
-                in foreachMoves_max board remMoves depth isMaxPlayer newAlpha beta move curScore
+                in foreachMove_max board remMoves depth isMaxPlayer newAlpha beta move curScore
             else
                 -- Existing bestMove and maxScore are better. Keep them.
                 -- Check the remaining moves.
-                foreachMoves_max board remMoves depth isMaxPlayer alpha beta bestMove maxScore
+                foreachMove_max board remMoves depth isMaxPlayer alpha beta bestMove maxScore
 
 
 --Arg1: The 3D board.
@@ -369,29 +369,29 @@ foreachMoves_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove m
 --Arg7: bestMove so far (or something).
 --Arg8: minScore so far (or something). Because this is foreach for MIN.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
-foreachMoves_min :: [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
-foreachMoves_min _ [] _ _ _ _ bestMove minScore =
+foreachMove_min :: [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
+foreachMove_min _ [] _ _ _ _ bestMove minScore =
     (Just bestMove, minScore) -- No more moves.
 
-foreachMoves_min board _ 0 isMaxPlayer alpha beta bestMove minScore =
+foreachMove_min board _ 0 isMaxPlayer alpha beta bestMove minScore =
     minimax board 0 isMaxPlayer alpha beta
     -- TODO: Depth==0, so use minimax's existing pattern? I don't know.
 
-foreachMoves_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove minScore =
+foreachMove_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove minScore =
     if beta <= alpha then
         (Just bestMove, minScore)
     else
         let (_, curScore) = minimax board (depth - 1) (not isMaxPlayer) alpha beta
         in
-            if curScore < minScore then
+            if curScore < minScore then  -- TODO: Perhaps this should be <= rather than just <?
                 -- curScore is better, so move is the new bestMove.
                 -- Check the remaining moves.
                 let newBeta = min beta curScore
-                in foreachMoves_min board remMoves depth isMaxPlayer alpha newBeta move curScore
+                in foreachMove_min board remMoves depth isMaxPlayer alpha newBeta move curScore
             else
                 -- Existing bestMove and minScore are better. Keep them.
                 -- Check the remaining moves.
-                foreachMoves_min board remMoves depth isMaxPlayer alpha beta bestMove minScore
+                foreachMove_min board remMoves depth isMaxPlayer alpha beta bestMove minScore
 
 
 --Arg1: A 3D board.
@@ -429,9 +429,9 @@ minimax board depth isMaxPlayer alpha beta =
                 initialBestMove = head allMoves -- TODO: Don't care? Just the first move?
             in
                 if isMaxPlayer then
-                    foreachMoves_max board allMoves depth True alpha beta initialBestMove (-bigNum)
+                    foreachMove_max board allMoves depth True alpha beta initialBestMove (-bigNum)
                 else
-                    foreachMoves_min board allMoves depth False alpha beta initialBestMove bigNum
+                    foreachMove_min board allMoves depth False alpha beta initialBestMove bigNum
 
 
 {-
