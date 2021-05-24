@@ -199,21 +199,12 @@ isTictactoeBoard2Dlist :: Char -> [[String]] -> Bool
 isTictactoeBoard2Dlist c boards2D = elem c (map (isTictactoeBoard2D c) boards2D)
 
 
--- Outcomes:
-outcomeGameInProgress = 0
-outcomePlayer1Wins = 1
-outcomePlayer2Wins = 2
-outcomeDraw = 3
 
+data Outcome = GameInProgress | Player1Wins | Player2Wins | Draw
 
 --Arg1: The 3D board.
-{-Ret:
-outcomeGameInProgress,
-outcomePlayer1Wins,
-outcomePlayer2Wins,
-outcomeDraw.
--}
-getOutcome :: [[String]] -> Int
+--Ret: An Outcome.
+getOutcome :: [[String]] -> Outcome
 getOutcome board =
     let ud = getUpDownBoards board
         lr = getLeftRightBoards board --this is actually doing what I thought back-forward was meant to do (vertical checks)
@@ -225,10 +216,10 @@ getOutcome board =
         concatted = concat (concat board)
         thereAreRemainingEmptyCells = elem emptyChar concatted
     in
-        if player1Wins then outcomePlayer1Wins
-        else if player2Wins then outcomePlayer2Wins
-        else if thereAreRemainingEmptyCells then outcomeGameInProgress
-        else outcomeDraw
+        if player1Wins then Player1Wins
+        else if player2Wins then Player2Wins
+        else if thereAreRemainingEmptyCells then GameInProgress
+        else Draw
 
 
 
@@ -417,45 +408,20 @@ minimax board depth isMaxPlayer alpha beta =
         boardSize = length board
         winningScore = getWinningScore boardSize
     in 
-        -- TODO: Replace the if checks with "case",
-        -- but without Haskell complaining about redundant stuff.
-        if outcome == outcomePlayer1Wins then
-            (Nothing, (-1) * winningScore)
-        else if outcome == outcomePlayer2Wins then
-            (Nothing, winningScore)
-        else if outcome == outcomeDraw then
-            (Nothing, 0)
-        else -- outcome == outcomeGameInProgress
-            let allMoves = getAllPossibleMoves board
-                -- chip = if isMaxPlayer then player2Char else player1Char
-                -- allBoards = map (\m -> setCell m chip board) allMoves
-                bigNum = winningScore -- TODO: Just a very big number.
-                initialBestMove = head allMoves -- TODO: Don't care? Just the first move?
-            in
-                if isMaxPlayer then
-                    foreachMove_max board allMoves depth True alpha beta initialBestMove (-bigNum)
-                else
-                    foreachMove_min board allMoves depth False alpha beta initialBestMove bigNum
-
-
-{-
         case outcome of
-            outcomePlayer1Wins -> (Nothing, (-1) * winningScore)
-            outcomePlayer2Wins -> (Nothing, winningScore)
-            outcomeDraw -> (Nothing, 0)
-            outcomeGameInProgress ->
+            Player1Wins -> (Nothing, (-1) * winningScore)
+            Player2Wins -> (Nothing, winningScore)
+            Draw -> (Nothing, 0)
+            GameInProgress ->
                 let chip = if isMaxPlayer then player2Char else player1Char
                     allMoves = getAllPossibleMoves board
-                    -- allBoards = map (\m -> setCell m chip board) allMoves
                     bigNum = winningScore -- TODO: Just a very big number.
                     initialBestMove = head allMoves -- TODO: Don't care? Just the first move?
                 in
                     if isMaxPlayer then
-                        foreachMoves_max board allMoves depth True alpha beta initialBestMove (-bigNum)
+                        foreachMove_max board allMoves depth True alpha beta initialBestMove (-bigNum)
                     else
-                        foreachMoves_min board allMoves depth False alpha beta initialBestMove bigNum
--}
-
+                        foreachMove_min board allMoves depth False alpha beta initialBestMove bigNum
 
 
 -- ============================== Game loop, etc. ==============================
@@ -583,17 +549,16 @@ getComputerMove board =
 
 --WARNING: Do not call this function if outcomeGameInProgress
 --Desc: Announces the winner.
---Arg1: outcome.
+--Arg1: Outcome.
 --Ret: IO ()
-announceWinner :: Int -> IO ()
-announceWinner 0 = error "ERROR: Trying to announceWinner while the game is still in progress."
+announceWinner :: Outcome -> IO ()
 announceWinner outcome =
-    if outcome == outcomePlayer1Wins then do
-        putStrLn "Player wins!"
-    else if outcome == outcomePlayer2Wins then do
-        putStrLn "Computer wins!"
-    else do {- outcomeDraw -}
-        putStrLn "It's a draw!"
+    case outcome of
+        Player1Wins -> do putStrLn "Player wins!"
+        Player2Wins -> do putStrLn "Computer wins!"
+        Draw -> do putStrLn "It's a draw!"
+        GameInProgress -> error "ERROR: Trying to announceWinner while the game is still in progress."
+        
 
 
 --Desc: Game loop.
@@ -604,20 +569,21 @@ gameLoop :: Int -> [[String]] -> IO ()
 gameLoop player board =
     do
         let outcome = getOutcome board
-             in
-                 if outcome == 0 then do
-                     showBoard board
-                     if player == player1 then do
-                         playerMove <- getPlayerMove board
-                         let newBoard = setCell playerMove player1Char board
-                             in gameLoop (3 - player) newBoard
-                     else do
-                         computerMove <- getComputerMove board
-                         let newBoard = setCell computerMove player2Char board
-                             in gameLoop (3 - player) newBoard
-                 else do
-                     showBoard board
-                     announceWinner outcome
+            in
+                case outcome of
+                    GameInProgress -> do
+                        showBoard board
+                        if player == player1 then do
+                            playerMove <- getPlayerMove board
+                            let newBoard = setCell playerMove player1Char board
+                                in gameLoop (3 - player) newBoard
+                        else do
+                            computerMove <- getComputerMove board
+                            let newBoard = setCell computerMove player2Char board
+                                in gameLoop (3 - player) newBoard
+                    otherwise -> do
+                        showBoard board
+                        announceWinner outcome
 
 
 
