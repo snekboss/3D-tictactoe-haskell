@@ -226,20 +226,13 @@ getOutcome board =
 
 
 -- ============================== heuristicAnalysis related ==============================
-
---Arg1: Board size.
---Ret: The score of the winning condition (a big number).
-getWinningScore :: Int -> Int
-getWinningScore boardSize = (boardSize ^ boardSize) ^ boardSize
-
-
 --Arg1: Number of chips of a certain player.
 --Arg2: The size of the board.
 --Ret: A score value (preferably non-linear) WRT the count and boardSize.
 countToScore :: Int -> Int -> Int
 countToScore count boardSize =
     if count == boardSize then
-        fromIntegral (getWinningScore boardSize) -- Win condition satisfied.
+        maxBound :: Int -- Win condition satisfied.
     else fromIntegral (boardSize ^ count)
 
 
@@ -400,22 +393,20 @@ minimax board 0 isMaxPlayer _ _ =
 minimax board depth isMaxPlayer alpha beta =
     let outcome = getOutcome board
         boardSize = length board
-        winningScore = getWinningScore boardSize
     in 
         case outcome of
-            Player1Wins -> (Nothing, (-1) * winningScore)
-            Player2Wins -> (Nothing, winningScore)
+            Player1Wins -> (Nothing, minBound :: Int)
+            Player2Wins -> (Nothing, maxBound :: Int)
             Draw -> (Nothing, 0)
             GameInProgress ->
                 let chip = if isMaxPlayer then player2Char else player1Char
                     allMoves = getAllPossibleMoves board
-                    bigNum = winningScore -- TODO: Just a very big number.
                     initialBestMove = head allMoves -- Don't care, take the first move.
                 in
                     if isMaxPlayer then
-                        foreachMove_max board allMoves depth True alpha beta initialBestMove (-bigNum)
+                        foreachMove_max board allMoves depth True alpha beta initialBestMove (minBound :: Int)
                     else
-                        foreachMove_min board allMoves depth False alpha beta initialBestMove bigNum
+                        foreachMove_min board allMoves depth False alpha beta initialBestMove (maxBound :: Int)
 
 
 -- ============================== Game loop, etc. ==============================
@@ -544,9 +535,8 @@ getPlayerMove board =
 getComputerMove :: [[String]] -> Int -> IO (Int, Int, Int)
 getComputerMove board difficulty =
     let boardSize = length board
-        bigNum = 2 * (getWinningScore boardSize) -- TODO: Is there an INT_MAX or something?
-        alpha = (-bigNum)
-        beta = bigNum
+        alpha = minBound :: Int
+        beta = maxBound :: Int
         (bestMove, _) = minimax board difficulty True alpha beta 
     in
         if bestMove == Nothing then do
