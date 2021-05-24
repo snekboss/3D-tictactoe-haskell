@@ -146,10 +146,8 @@ getDiagonals2D board2D = [diag board2D, otherDiag board2D]
 isTictactoeRow :: Char -> String -> Bool
 isTictactoeRow c row =
     let size = length row
-    in if c == player1Char then
-        row == (replicate size player1Char)
-    else
-        row == (replicate size player2Char)
+        winRow = replicate size c
+    in row == winRow
 
 --Arg1: Requested char.
 --Arg2: A single board 2D.
