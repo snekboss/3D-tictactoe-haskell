@@ -366,18 +366,18 @@ minimax board depth isMaxPlayer alpha beta =
 askBoardSize :: IO Int
 askBoardSize =
     do
-        putStr "Enter board size: "
-        input <- getLine
-        let dims = readMaybe input :: Maybe Int
-         in
-          if dims == Nothing then do
-              putStrLn "Invalid input."
-              askBoardSize
-          else if dims < (Just 3) then do
-              putStrLn "The size cannot be less than 3."
-              askBoardSize
-          else do
-              return (fromJust dims)
+      putStr "Enter board size: "
+      input <- getLine
+      let dims = readMaybe input :: Maybe Int
+       in
+        if dims == Nothing then do
+            putStrLn "Invalid input."
+            askBoardSize
+        else if dims < (Just 3) then do
+            putStrLn "The size cannot be less than 3."
+            askBoardSize
+        else do
+            return (fromJust dims)
 
 --Asks the difficulty of the game (the depth value of minimax).
 --Ret: IO Int.
