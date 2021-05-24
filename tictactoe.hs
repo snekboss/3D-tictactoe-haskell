@@ -10,6 +10,8 @@ player2Char = 'O'
 player1 = 1
 player2 = 2
 
+type Board = [[String]]
+
 
 -- ============================== Board to String related stuff ==============================
 --Intersperses a string with ' '.
@@ -25,13 +27,13 @@ toStrBoard2D board2D = intercalate "   " (map toStrRow board2D)
 
 --Arg1: 3D board.
 --Ret: Formatted output string of the board.
-toStrBoard :: [[String]] -> String
+toStrBoard :: Board -> String
 toStrBoard board3D = unlines (map toStrBoard2D board3D)
 
 --Shows an up-down (default) board, but transposes it first, because it looks right...
 --When printed like this, we can easily choose a move based on (face, row, col) in that order.
 --What we see matches with what we get. Or something... Anyway.
-showBoard :: [[String]] -> IO ()
+showBoard :: Board -> IO ()
 showBoard board = do
     putStrLn (toStrBoard (transpose board))
 
@@ -39,7 +41,7 @@ showBoard board = do
 -- ============================== Board related functions (hopefully) ==============================
 --Arg1: Dimension N of the NxNxN tic-tac-toe board.
 --Ret: An empty board. For example, dims=3, then [["---", "---", "---"], ["---", "---", "---"], ["---", "---", "---"]].
-initBoard :: Int -> [[String]]
+initBoard :: Int -> Board
 initBoard dims = replicate dims (replicate dims (replicate dims emptyChar))
 
 --Arg1: The size of the board
@@ -71,21 +73,21 @@ update3 (col, row, face) val grid = map_at col (map_at row (map_at face (const v
 --Arg3: A 3D tictactoe board.
 --Ret: The new tictactoe board, where the board at the triplet's coordinates now contains Arg2's value.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
-setCell :: (Int, Int, Int) -> Char -> [[String]] -> [[String]]
+setCell :: (Int, Int, Int) -> Char -> Board -> Board
 setCell (col, row, face) = update3 ((face - 1), (row - 1), (col - 1))
 
 --Arg1: A tictactoe triplet (col, row, face), where each coordinate is in the inclusive range [1, (length Arg2)].
 --Arg2: A 3D tictactoe board.
 --Ret:emptyChar or player1Char or player2Char.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
-getCell :: (Int, Int, Int) -> [[String]] -> Char
+getCell :: (Int, Int, Int) -> Board -> Char
 getCell (col, row, face) board = board !! (face - 1) !! (row - 1) !! (col - 1)
 
 --Arg1: A tictactoe move triplet (col, row, face), where each coordinate is in the inclusive range [1, (length Arg2)].
 --Arg2: A 3D tictactoe board.
 --Ret: True if the move is available on the board.
 --NOTES: The Arg1 triplet is assumed to be inside the boundaries of the board.
-isEmpty :: (Int, Int, Int) -> [[String]] -> Bool
+isEmpty :: (Int, Int, Int) -> Board -> Bool
 isEmpty triplet board = (getCell triplet board) == emptyChar
 
 
@@ -94,24 +96,24 @@ isEmpty triplet board = (getCell triplet board) == emptyChar
 -- ********** Common Helper Functions **********
 --Arg1: The 3D board.
 --Ret: The same 3D board, however each 2D board is transposed.
-getEachTransposed :: [[String]] -> [[String]]
+getEachTransposed :: Board -> Board
 getEachTransposed = map transpose
 
 -- ********** Extracting 2D boards. **********
 --Arg1: The default 3D board of size NxNxN (same thing as getUpDownBoards).
 --Ret: A list of N 2D-boards (up-down), all of size NxN.
-getUpDownBoards :: [[String]] -> [[String]]
+getUpDownBoards :: Board -> Board
 getUpDownBoards board3D = board3D
 
 --Arg1: The default 3D board of size NxNxN (same thing as getUpDownBoards).
 --Ret: A list of N 2D-boards (back-forward), all of size NxN.
-getBackForwardBoards :: [[String]] -> [[String]]
+getBackForwardBoards :: Board -> Board
 getBackForwardBoards board3D = getEachTransposed (transpose board3D)
 -- getBackForwardBoards board3D = transpose board3D
 
 --Arg1: The default 3D board of size NxNxN (same thing as getUpDownBoards).
 --Ret: A list of N 2D-boards (left-right), all of size NxN.
-getLeftRightBoards :: [[String]] -> [[String]]
+getLeftRightBoards :: Board -> Board
 getLeftRightBoards board3D = transpose (getEachTransposed board3D)
 
 
@@ -162,14 +164,14 @@ isTictactoeBoard2D c board2D =
 
 --Arg1: A list of 2D tictactoe boards.
 --Ret: True if player1 has a full row in at least one of the boards.
-isTictactoeBoard2Dlist :: Char -> [[String]] -> Bool
+isTictactoeBoard2Dlist :: Char -> Board -> Bool
 isTictactoeBoard2Dlist c boards2D = elem c (map (isTictactoeBoard2D c) boards2D)
 
 data Outcome = GameInProgress | Player1Wins | Player2Wins | Draw
 
 --Arg1: The 3D board.
 --Ret: An Outcome.
-getOutcome :: [[String]] -> Outcome
+getOutcome :: Board -> Outcome
 getOutcome board =
     let ud = getUpDownBoards board
         lr = getLeftRightBoards board --this is actually doing what I thought back-forward was meant to do (vertical checks)
@@ -222,7 +224,7 @@ getScoresInBoard2D c board2D =
 --Arg1: player1Char or player2Char
 --Arg2: A list of 2D boards.
 --Ret: Score of the requested player.
-getScoresInListOf2Dboards :: Char -> [[String]] -> Int
+getScoresInListOf2Dboards :: Char -> Board -> Int
 getScoresInListOf2Dboards c listBoard2D = sum (map (getScoresInBoard2D c) listBoard2D)
 
 --Arg1: player1Char or player2Char
@@ -234,7 +236,7 @@ getScoresInDiagonals3D c diagonals3D = sum (map (getScoresInRow c) diagonals3D)
 --Arg1: player1Char or player2Char
 --Arg2: Board 3D.
 --Ret: Score of the requested player.
-getHeuristicScores :: Char -> [[String]] -> Int
+getHeuristicScores :: Char -> Board -> Int
 getHeuristicScores c board =
     let ud = getUpDownBoards board
         lr = getLeftRightBoards board
@@ -250,7 +252,7 @@ getHeuristicScores c board =
 -- ============================== minimax related ==============================
 --Arg1: A 3D board.
 --Ret: A list of all possible move triplets (col, row, face) whose values are in [1..boardSize].
-getAllPossibleMoves :: [[String]] -> [(Int, Int, Int)]
+getAllPossibleMoves :: Board -> [(Int, Int, Int)]
 getAllPossibleMoves board =
     let range = [1..(length board)]
     in [(c, r, f) | c <- range, r <- range, f <- range, isEmpty (c, r, f) board]
@@ -264,7 +266,7 @@ getAllPossibleMoves board =
 --Arg7: bestMove so far (or something).
 --Arg8: maxScore so far (or something). Because this is foreach for MAX.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
-foreachMove_max :: [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
+foreachMove_max :: Board -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
 foreachMove_max _ [] _ _ _ _ bestMove maxScore =
     (Just bestMove, maxScore) -- No more moves.
     
@@ -299,7 +301,7 @@ foreachMove_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove ma
 --Arg7: bestMove so far (or something).
 --Arg8: minScore so far (or something). Because this is foreach for MIN.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
-foreachMove_min :: [[String]] -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
+foreachMove_min :: Board -> [(Int, Int, Int)] -> Int -> Bool -> Int -> Int -> (Int, Int, Int) -> Int -> (Maybe (Int, Int, Int), Int)
 foreachMove_min _ [] _ _ _ _ bestMove minScore =
     (Just bestMove, minScore) -- No more moves.
 
@@ -331,7 +333,7 @@ foreachMove_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove mi
 --Arg4: Alpha.
 --Arg5: Beta.
 --Ret: A tuple (Maybe (row, col, face), bestScore). I think it's (Maybe bestMoveTriplet, bestScore).
-minimax :: [[String]] -> Int -> Bool -> Int -> Int -> (Maybe (Int, Int, Int), Int)
+minimax :: Board -> Int -> Bool -> Int -> Int -> (Maybe (Int, Int, Int), Int)
 minimax board 0 isMaxPlayer _ _ = 
     -- Depth == 0, therefore return the heuristic estimate.
     let player1Score = getHeuristicScores player1Char board
@@ -429,7 +431,7 @@ main =
 --      while the rest of the code needs the other order (col, row, face).
 --Arg1: The 3D board.
 --Ret: IO (Int, Int, Int). These are (col, row, face). Yes, it's reversed.
-getPlayerMove :: [[String]] -> IO (Int, Int, Int)
+getPlayerMove :: Board -> IO (Int, Int, Int)
 getPlayerMove board =
     do
         putStr "Your move (face row col)?: "
@@ -460,7 +462,7 @@ getPlayerMove board =
 
 --Arg1: A 3D board.
 --Ret: IO (Int, Int, Int). These are (col, row, face) of the computer.
-getComputerMove :: [[String]] -> Int -> IO (Int, Int, Int)
+getComputerMove :: Board -> Int -> IO (Int, Int, Int)
 getComputerMove board difficulty =
     let boardSize = length board
         alpha = minBound :: Int
@@ -492,7 +494,7 @@ announceWinner outcome =
 --Arg1: (player1) or (player2)
 --Arg2: The current state of the game board.
 --Ret: IO ()
-gameLoop :: Int -> [[String]] -> Int -> IO ()
+gameLoop :: Int -> Board -> Int -> IO ()
 gameLoop player board difficulty =
     do
         let outcome = getOutcome board
