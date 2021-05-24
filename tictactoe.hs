@@ -434,31 +434,31 @@ main =
 getPlayerMove :: Board -> IO (Int, Int, Int)
 getPlayerMove board =
     do
-        putStr "Your move (face row col)?: "
-        input <- getLine
-        let maybeNums = map readMaybe (words input) :: [Maybe Int]
-         in
-          if length maybeNums /= 3 || elem Nothing maybeNums then do
-              putStrLn "Please enter 3 numbers."
-              getPlayerMove board
-          else do
-              let [face, row, col] = maybeNums
-                  triplet = (fromJust col, fromJust row, fromJust face)
-                  boardSize = length board
-               in
-                if isOutOfBounds boardSize triplet then do
-                    putStrLn ""
-                    putStrLn "Your move is out of bounds."
-                    putStrLn ("Please fit your coordinates into the inclusive [1," ++ show boardSize ++ "] range.")
-                    putStrLn ""
-                    getPlayerMove board
-                else if (isEmpty triplet board) == False then do
-                    putStrLn ""
-                    putStrLn "You cannot make your move there (cell is not empty)."
-                    putStrLn ""
-                    getPlayerMove board
-                else do
-                    return triplet
+      putStr "Your move (face row col)?: "
+      input <- getLine
+      let maybeNums = map readMaybe (words input) :: [Maybe Int]
+       in
+        if length maybeNums /= 3 || elem Nothing maybeNums then do
+            putStrLn "Please enter 3 numbers."
+            getPlayerMove board
+        else do
+            let [face, row, col] = maybeNums
+                triplet = (fromJust col, fromJust row, fromJust face)
+                boardSize = length board
+             in
+              if isOutOfBounds boardSize triplet then do
+                  putStrLn ""
+                  putStrLn "Your move is out of bounds."
+                  putStrLn ("Please fit your coordinates into the inclusive [1," ++ show boardSize ++ "] range.")
+                  putStrLn ""
+                  getPlayerMove board
+              else if (isEmpty triplet board) == False then do
+                  putStrLn ""
+                  putStrLn "You cannot make your move there (cell is not empty)."
+                  putStrLn ""
+                  getPlayerMove board
+              else do
+                  return triplet
 
 --Arg1: A 3D board.
 --Ret: IO (Int, Int, Int). These are (col, row, face) of the computer.
@@ -497,16 +497,16 @@ announceWinner outcome =
 gameLoop :: Int -> Board -> Int -> IO ()
 gameLoop player board difficulty =
     do
-        let outcome = getOutcome board
-         in
-          case outcome of
-              GameInProgress -> do
-                  showBoard board
-                  move <- if player == player1 then getPlayerMove board else getComputerMove board difficulty
-                  let chip = if player == player1 then player1Char else player2Char
-                      newBoard = setCell move chip board
-                   in gameLoop (3 - player) newBoard difficulty
-              otherwise -> do
-                  showBoard board
-                  announceWinner outcome
+      let outcome = getOutcome board
+       in
+        case outcome of
+            GameInProgress -> do
+                showBoard board
+                move <- if player == player1 then getPlayerMove board else getComputerMove board difficulty
+                let chip = if player == player1 then player1Char else player2Char
+                    newBoard = setCell move chip board
+                 in gameLoop (3 - player) newBoard difficulty
+            otherwise -> do
+                showBoard board
+                announceWinner outcome
 
