@@ -2,6 +2,7 @@ import Data.List
 import Data.Function
 import Data.Maybe
 import Text.Read
+import System.IO
 
 emptyChar = '.'
 player1Char = 'X'
@@ -146,10 +147,7 @@ getDiagonals2D board2D = [diag board2D, otherDiag board2D]
 --Arg2: A single tictactoe row.
 --Ret: True if requested player has a win condition in this row.
 isTictactoeRow :: Char -> String -> Bool
-isTictactoeRow c row =
-    let size = length row
-        winRow = replicate size c
-     in row == winRow
+isTictactoeRow c row = all (== c) row
 
 --Arg1: Requested char.
 --Arg2: A single board 2D.
@@ -420,6 +418,7 @@ askStarterPlayer =
 main :: IO ()
 main =
     do
+      hSetBuffering stdout NoBuffering
       size <- askBoardSize
       difficulty <- askDifficulty
       starter <- askStarterPlayer
