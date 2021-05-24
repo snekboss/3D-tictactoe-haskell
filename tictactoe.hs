@@ -498,19 +498,15 @@ gameLoop :: Int -> Board -> Int -> IO ()
 gameLoop player board difficulty =
     do
         let outcome = getOutcome board
-            in
-                case outcome of
-                    GameInProgress -> do
-                        showBoard board
-                        if player == player1 then do
-                            playerMove <- getPlayerMove board
-                            let newBoard = setCell playerMove player1Char board
-                                in gameLoop (3 - player) newBoard difficulty
-                        else do
-                            computerMove <- getComputerMove board difficulty
-                            let newBoard = setCell computerMove player2Char board
-                                in gameLoop (3 - player) newBoard difficulty
-                    otherwise -> do
-                        showBoard board
-                        announceWinner outcome
+         in
+             case outcome of
+                 GameInProgress -> do
+                     showBoard board
+                     move <- if player == player1 then getPlayerMove board else getComputerMove board difficulty
+                     let chip = if player == player1 then player1Char else player2Char
+                         newBoard = setCell move chip board
+                      in gameLoop (3 - player) newBoard difficulty
+                 otherwise -> do
+                     showBoard board
+                     announceWinner outcome
 
