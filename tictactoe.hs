@@ -438,6 +438,27 @@ askBoardSize =
             else do
                 return (fromJust dims)
 
+--Asks the difficulty of the game (the depth value of minimax).
+--Ret: IO Int.
+askDifficulty :: IO Int
+askDifficulty = 
+    let easy = 1
+        hard = 3
+        difficultyStr = "(" ++ (show easy) ++ " = easy, " ++ (show hard) ++ " = hard): "
+    in do
+        putStr ("Choose the difficulty " ++ difficultyStr)
+        input <- getLine
+        let difficulty = readMaybe input :: Maybe Int
+         in
+            if difficulty == Nothing then do
+                putStrLn "Invalid input."
+                askDifficulty
+            else if difficulty < (Just easy) || difficulty > (Just hard) then do
+                putStrLn ("Please enter a value between " ++ (show easy) ++ " and " ++ (show hard) ++ ".")
+                askDifficulty
+            else do
+                return (fromJust difficulty)
+
 
 
 --Asks who should start first. Human (player1) or computer (player2).
@@ -462,18 +483,20 @@ run :: IO ()
 run =
     do
         size <- askBoardSize
+        difficulty <- askDifficulty
         starter <- askStarterPlayer
-        gameStart starter (initBoard size)
+        gameStart starter (initBoard size) difficulty
 
 
 --Desc: Do game initialization stuff here.
 --Arg1: Player ID (Int). Basically, (player1) or (player2).
 --Arg2: The 3D board.
+--Arg3: Game difficulty (minimax depth).
 --Ret: IO ().
-gameStart :: Int -> [[String]] -> IO ()
-gameStart player board =
+gameStart :: Int -> [[String]] -> Int -> IO ()
+gameStart player board difficulty =
     do
-        gameLoop player board
+        gameLoop player board difficulty
 
 
 
@@ -518,14 +541,13 @@ getPlayerMove board =
 
 --Arg1: A 3D board.
 --Ret: IO (Int, Int, Int). These are (col, row, face) of the computer.
-getComputerMove :: [[String]] -> IO (Int, Int, Int)
-getComputerMove board =
+getComputerMove :: [[String]] -> Int -> IO (Int, Int, Int)
+getComputerMove board difficulty =
     let boardSize = length board
         bigNum = 2 * (getWinningScore boardSize) -- TODO: Is there an INT_MAX or something?
         alpha = (-bigNum)
         beta = bigNum
-        depth = 3 -- TODO: Fix hardcoded depth value. Ask for difficulty?
-        (bestMove, _) = minimax board depth True alpha beta 
+        (bestMove, _) = minimax board difficulty True alpha beta 
     in
         if bestMove == Nothing then do
             error "The game is in progress, but minimax returned Nothing as its best move. Perhaps the game should have ended?"
@@ -541,7 +563,7 @@ getComputerMove board =
 
 
 
---WARNING: Do not call this function if outcomeGameInProgress
+--WARNING: Do not call this function if GameInProgress
 --Desc: Announces the winner.
 --Arg1: Outcome.
 --Ret: IO ()
@@ -559,8 +581,8 @@ announceWinner outcome =
 --Arg1: (player1) or (player2)
 --Arg2: The current state of the game board.
 --Ret: IO ()
-gameLoop :: Int -> [[String]] -> IO ()
-gameLoop player board =
+gameLoop :: Int -> [[String]] -> Int -> IO ()
+gameLoop player board difficulty =
     do
         let outcome = getOutcome board
             in
@@ -570,11 +592,11 @@ gameLoop player board =
                         if player == player1 then do
                             playerMove <- getPlayerMove board
                             let newBoard = setCell playerMove player1Char board
-                                in gameLoop (3 - player) newBoard
+                                in gameLoop (3 - player) newBoard difficulty
                         else do
-                            computerMove <- getComputerMove board
+                            computerMove <- getComputerMove board difficulty
                             let newBoard = setCell computerMove player2Char board
-                                in gameLoop (3 - player) newBoard
+                                in gameLoop (3 - player) newBoard difficulty
                     otherwise -> do
                         showBoard board
                         announceWinner outcome
