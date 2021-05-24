@@ -421,17 +421,7 @@ main =
         size <- askBoardSize
         difficulty <- askDifficulty
         starter <- askStarterPlayer
-        gameStart starter (initBoard size) difficulty
-
---Desc: Do game initialization stuff here.
---Arg1: Player ID (Int). Basically, (player1) or (player2).
---Arg2: The 3D board.
---Arg3: Game difficulty (minimax depth).
---Ret: IO ().
-gameStart :: Int -> [[String]] -> Int -> IO ()
-gameStart player board difficulty =
-    do
-        gameLoop player board difficulty
+        gameLoop starter (initBoard size) difficulty
 
 --Desc: Asks the move triplet (face row col) of the player.
 --      What the player gets asked VS what is returned is in the opposite order.
