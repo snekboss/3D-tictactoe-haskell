@@ -58,7 +58,7 @@ isOutOfBounds size (col, row, face) = col < 1 || row < 1 || face < 1 || col > si
 map_at :: Int -> (a -> a) -> [a] -> [a]
 map_at i f list =
     let (prevElems, target : remElems) = splitAt i list
-    in prevElems ++ (f target : remElems)
+     in prevElems ++ (f target : remElems)
 
 --Desc: Update element (col, row, face) of a three-dimensional array.
 --Arg1: (col, row, face) triplet whose value needs to be changed.
@@ -149,7 +149,7 @@ isTictactoeRow :: Char -> String -> Bool
 isTictactoeRow c row =
     let size = length row
         winRow = replicate size c
-    in row == winRow
+     in row == winRow
 
 --Arg1: Requested char.
 --Arg2: A single board 2D.
@@ -159,7 +159,7 @@ isTictactoeBoard2D :: Char -> [String] -> Char
 isTictactoeBoard2D c board2D =
     let horizontalWin = or (map (isTictactoeRow c) board2D)
         diagonalWin = or (map (isTictactoeRow c) (getDiagonals2D board2D))
-    in
+     in
         if horizontalWin || diagonalWin then c else emptyChar
 
 --Arg1: A list of 2D tictactoe boards.
@@ -182,7 +182,7 @@ getOutcome board =
         player2Wins = or (map (isTictactoeBoard2Dlist player2Char) allBoards2D) || or (map (isTictactoeRow player2Char) diagonals3D)
         concatted = concat (concat board)
         thereAreRemainingEmptyCells = elem emptyChar concatted
-    in
+     in
         if player1Wins then Player1Wins
         else if player2Wins then Player2Wins
         else if thereAreRemainingEmptyCells then GameInProgress
@@ -206,7 +206,7 @@ getScoresInRow :: Char -> String -> Int
 getScoresInRow player row =
     let count = length [p | p <- row, p == player]
         score = countToScore count (length row)
-    in
+     in
         if elem player1Char row && elem player2Char row
         then 0 -- Nobody can win in this row
         else score                     
@@ -219,7 +219,7 @@ getScoresInBoard2D c board2D =
     let scoreSum = sum (map (getScoresInRow c) board2D)
         [d1, d2] = map (getScoresInRow c) (getDiagonals2D board2D)
         totalScore = scoreSum + d1 + d2
-    in totalScore
+     in totalScore
 
 --Arg1: player1Char or player2Char
 --Arg2: A list of 2D boards.
@@ -246,7 +246,7 @@ getHeuristicScores c board =
         scoreSum = sum (map (getScoresInListOf2Dboards c) allBoards2D)
         diag3Dsum = getScoresInDiagonals3D c diagonals3D
         totalScore = scoreSum + diag3Dsum
-    in totalScore
+     in totalScore
 
 
 -- ============================== minimax related ==============================
@@ -255,7 +255,7 @@ getHeuristicScores c board =
 getAllPossibleMoves :: Board -> [(Int, Int, Int)]
 getAllPossibleMoves board =
     let range = [1..(length board)]
-    in [(c, r, f) | c <- range, r <- range, f <- range, isEmpty (c, r, f) board]
+     in [(c, r, f) | c <- range, r <- range, f <- range, isEmpty (c, r, f) board]
 
 --Arg1: The 3D board.
 --Arg2: All possible moves
@@ -281,16 +281,16 @@ foreachMove_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove ma
         let chip = if isMaxPlayer then player2Char else player1Char
             newBoard = setCell move chip board
             (_, curScore) = minimax newBoard (depth - 1) (not isMaxPlayer) alpha beta
-        in
-            if curScore > maxScore then --
-                -- curScore is better, so move is the new bestMove.
-                -- Check the remaining moves.
-                let newAlpha = max alpha curScore
-                in foreachMove_max board remMoves depth isMaxPlayer newAlpha beta move curScore
-            else
-                -- Existing bestMove and maxScore are better. Keep them.
-                -- Check the remaining moves.
-                foreachMove_max board remMoves depth isMaxPlayer alpha beta bestMove maxScore
+         in
+             if curScore > maxScore then --
+                 -- curScore is better, so move is the new bestMove.
+                 -- Check the remaining moves.
+                 let newAlpha = max alpha curScore
+                  in foreachMove_max board remMoves depth isMaxPlayer newAlpha beta move curScore
+             else
+                 -- Existing bestMove and maxScore are better. Keep them.
+                 -- Check the remaining moves.
+                 foreachMove_max board remMoves depth isMaxPlayer alpha beta bestMove maxScore
 
 --Arg1: The 3D board.
 --Arg2: All possible moves
@@ -316,16 +316,16 @@ foreachMove_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove mi
         let chip = if isMaxPlayer then player2Char else player1Char
             newBoard = setCell move chip board
             (_, curScore) = minimax newBoard (depth - 1) (not isMaxPlayer) alpha beta
-        in
-            if curScore < minScore then
-                -- curScore is better, so move is the new bestMove.
-                -- Check the remaining moves.
-                let newBeta = min beta curScore
-                in foreachMove_min board remMoves depth isMaxPlayer alpha newBeta move curScore
-            else
-                -- Existing bestMove and minScore are better. Keep them.
-                -- Check the remaining moves.
-                foreachMove_min board remMoves depth isMaxPlayer alpha beta bestMove minScore
+         in
+             if curScore < minScore then
+                 -- curScore is better, so move is the new bestMove.
+                 -- Check the remaining moves.
+                 let newBeta = min beta curScore
+                  in foreachMove_min board remMoves depth isMaxPlayer alpha newBeta move curScore
+             else
+                 -- Existing bestMove and minScore are better. Keep them.
+                 -- Check the remaining moves.
+                 foreachMove_min board remMoves depth isMaxPlayer alpha beta bestMove minScore
 
 --Arg1: A 3D board.
 --Arg2: Depth.
@@ -338,26 +338,26 @@ minimax board 0 isMaxPlayer _ _ =
     -- Depth == 0, therefore return the heuristic estimate.
     let player1Score = getHeuristicScores player1Char board
         player2Score = getHeuristicScores player2Char board
-    in (Nothing, (player2Score - player1Score))
-    -- Player1 (human) is always minimizing, so return the score for the AI (player2).
+     in (Nothing, (player2Score - player1Score))
+     -- Player1 (human) is always minimizing, so return the score for the AI (player2).
 
 minimax board depth isMaxPlayer alpha beta =
     let outcome = getOutcome board
         boardSize = length board
-    in 
-        case outcome of
-            Player1Wins -> (Nothing, minBound :: Int)
-            Player2Wins -> (Nothing, maxBound :: Int)
-            Draw -> (Nothing, 0)
-            GameInProgress ->
-                let chip = if isMaxPlayer then player2Char else player1Char
-                    allMoves = getAllPossibleMoves board
-                    initialBestMove = head allMoves -- Don't care, take the first move.
-                in
-                    if isMaxPlayer then
-                        foreachMove_max board allMoves depth True alpha beta initialBestMove (minBound :: Int)
-                    else
-                        foreachMove_min board allMoves depth False alpha beta initialBestMove (maxBound :: Int)
+     in 
+         case outcome of
+             Player1Wins -> (Nothing, minBound :: Int)
+             Player2Wins -> (Nothing, maxBound :: Int)
+             Draw -> (Nothing, 0)
+             GameInProgress ->
+                 let chip = if isMaxPlayer then player2Char else player1Char
+                     allMoves = getAllPossibleMoves board
+                     initialBestMove = head allMoves -- Don't care, take the first move.
+                  in
+                      if isMaxPlayer then
+                          foreachMove_max board allMoves depth True alpha beta initialBestMove (minBound :: Int)
+                      else
+                          foreachMove_min board allMoves depth False alpha beta initialBestMove (maxBound :: Int)
 
 
 -- ============================== Game loop, etc. ==============================
@@ -386,7 +386,7 @@ askDifficulty =
     let easy = 1
         hard = 3
         difficultyStr = "(" ++ show easy ++ " = easy, " ++ show hard ++ " = hard): "
-    in do
+     in do
         putStr ("Choose the difficulty " ++ difficultyStr)
         input <- getLine
         let difficulty = readMaybe input :: Maybe Int
@@ -437,28 +437,28 @@ getPlayerMove board =
         putStr "Your move (face row col)?: "
         input <- getLine
         let maybeNums = map readMaybe (words input) :: [Maybe Int]
-            in
-                if length maybeNums /= 3 || elem Nothing maybeNums then do
-                    putStrLn "Please enter 3 numbers."
-                    getPlayerMove board
-                else do
-                    let [face, row, col] = maybeNums
-                        triplet = (fromJust col, fromJust row, fromJust face)
-                        boardSize = length board
-                        in
-                            if isOutOfBounds boardSize triplet then do
-                                putStrLn ""
-                                putStrLn "Your move is out of bounds."
-                                putStrLn ("Please fit your coordinates into the inclusive [1," ++ show boardSize ++ "] range.")
-                                putStrLn ""
-                                getPlayerMove board
-                            else if (isEmpty triplet board) == False then do
-                                putStrLn ""
-                                putStrLn "You cannot make your move there (cell is not empty)."
-                                putStrLn ""
-                                getPlayerMove board
-                            else do
-                                return triplet
+         in
+             if length maybeNums /= 3 || elem Nothing maybeNums then do
+                 putStrLn "Please enter 3 numbers."
+                 getPlayerMove board
+             else do
+                 let [face, row, col] = maybeNums
+                     triplet = (fromJust col, fromJust row, fromJust face)
+                     boardSize = length board
+                  in
+                      if isOutOfBounds boardSize triplet then do
+                          putStrLn ""
+                          putStrLn "Your move is out of bounds."
+                          putStrLn ("Please fit your coordinates into the inclusive [1," ++ show boardSize ++ "] range.")
+                          putStrLn ""
+                          getPlayerMove board
+                      else if (isEmpty triplet board) == False then do
+                          putStrLn ""
+                          putStrLn "You cannot make your move there (cell is not empty)."
+                          putStrLn ""
+                          getPlayerMove board
+                      else do
+                          return triplet
 
 --Arg1: A 3D board.
 --Ret: IO (Int, Int, Int). These are (col, row, face) of the computer.
@@ -468,7 +468,7 @@ getComputerMove board difficulty =
         alpha = minBound :: Int
         beta = maxBound :: Int
         (bestMove, _) = minimax board difficulty True alpha beta 
-    in
+     in
         if bestMove == Nothing then do
             error "The game is in progress, but minimax returned Nothing as its best move. Perhaps the game should have ended?"
         else
