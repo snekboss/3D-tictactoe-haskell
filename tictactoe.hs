@@ -385,7 +385,7 @@ askDifficulty :: IO Int
 askDifficulty = 
     let easy = 1
         hard = 3
-        difficultyStr = "(" ++ (show easy) ++ " = easy, " ++ (show hard) ++ " = hard): "
+        difficultyStr = "(" ++ show easy ++ " = easy, " ++ show hard ++ " = hard): "
     in do
         putStr ("Choose the difficulty " ++ difficultyStr)
         input <- getLine
@@ -395,7 +395,7 @@ askDifficulty =
                 putStrLn "Invalid input."
                 askDifficulty
             else if difficulty < (Just easy) || difficulty > (Just hard) then do
-                putStrLn ("Please enter a value between " ++ (show easy) ++ " and " ++ (show hard) ++ ".")
+                putStrLn ("Please enter a value between " ++ show easy ++ " and " ++ show hard ++ ".")
                 askDifficulty
             else do
                 return (fromJust difficulty)
@@ -459,7 +459,7 @@ getPlayerMove board =
                             if isOutOfBounds boardSize triplet then do
                                 putStrLn ""
                                 putStrLn "Your move is out of bounds."
-                                putStrLn ("Please fit your coordinates into the inclusive [1," ++ (show boardSize) ++ "] range.")
+                                putStrLn ("Please fit your coordinates into the inclusive [1," ++ show boardSize ++ "] range.")
                                 putStrLn ""
                                 getPlayerMove board
                             else if (isEmpty triplet board) == False then do
@@ -483,7 +483,7 @@ getComputerMove board difficulty =
             error "The game is in progress, but minimax returned Nothing as its best move. Perhaps the game should have ended?"
         else
             let move@(col, row, face) = (fromJust bestMove)
-                moveStr = "(" ++ (show face) ++ ", " ++ (show row) ++ ", " ++ (show col) ++ ")"
+                moveStr = "(" ++ show face ++ ", " ++ show row ++ ", " ++ show col ++ ")"
             in do
                 putStrLn ("Computer moves at: " ++ moveStr ++ " (face row col).")
                 return move
