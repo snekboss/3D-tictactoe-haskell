@@ -249,19 +249,13 @@ countToScore count boardSize =
 --Arg2: A single row.
 --Ret: Score of the requested player.
 getScoresInRow :: Char -> String -> Int
-getScoresInRow requestedChar row =
-    let boardSize = length row
-        player1Count = length [p | p <- row, p == player1Char]
-        player1Score = countToScore player1Count boardSize
-        player2Count = length [c | c <- row, c == player2Char]
-        player2Score = countToScore player2Count boardSize
+getScoresInRow player row =
+    let count = length [p | p <- row, p == player]
+        score = countToScore count (length row)
     in
-        if player1Count > 0 && player2Count > 0 then
-            0 -- Nobody can win in this row.
-        else if requestedChar == player1Char then
-            player1Score
-        else
-            player2Score
+        if elem player1Char row && elem player2Char row
+        then 0 -- Nobody can win in this row
+        else score
                          
 
 --Arg1: player1Char or player2Char
