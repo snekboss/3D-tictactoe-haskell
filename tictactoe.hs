@@ -347,7 +347,9 @@ foreachMove_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove ma
     if beta <= alpha then
         (Just bestMove, maxScore)
     else
-        let (_, curScore) = minimax board (depth - 1) (not isMaxPlayer) alpha beta
+        let chip = if isMaxPlayer then player2Char else player1Char
+            newBoard = setCell move chip board
+            (_, curScore) = minimax newBoard (depth - 1) (not isMaxPlayer) alpha beta
         in
             if curScore > maxScore then -- TODO: Perhaps this should be >= rather than just >?
                 -- curScore is better, so move is the new bestMove.
@@ -381,7 +383,9 @@ foreachMove_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove mi
     if beta <= alpha then
         (Just bestMove, minScore)
     else
-        let (_, curScore) = minimax board (depth - 1) (not isMaxPlayer) alpha beta
+        let chip = if isMaxPlayer then player2Char else player1Char
+            newBoard = setCell move chip board
+            (_, curScore) = minimax newBoard (depth - 1) (not isMaxPlayer) alpha beta
         in
             if curScore < minScore then  -- TODO: Perhaps this should be <= rather than just <?
                 -- curScore is better, so move is the new bestMove.
@@ -422,8 +426,8 @@ minimax board depth isMaxPlayer alpha beta =
         else if outcome == outcomeDraw then
             (Nothing, 0)
         else -- outcome == outcomeGameInProgress
-            let chip = if isMaxPlayer then player2Char else player1Char
-                allMoves = getAllPossibleMoves board
+            let allMoves = getAllPossibleMoves board
+                -- chip = if isMaxPlayer then player2Char else player1Char
                 -- allBoards = map (\m -> setCell m chip board) allMoves
                 bigNum = winningScore -- TODO: Just a very big number.
                 initialBestMove = head allMoves -- TODO: Don't care? Just the first move?
