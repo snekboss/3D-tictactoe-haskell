@@ -326,7 +326,7 @@ foreachMove_max _ [] _ _ _ _ bestMove maxScore =
 
 foreachMove_max board _ 0 isMaxPlayer alpha beta bestMove maxScore =
     minimax board 0 isMaxPlayer alpha beta
-    -- TODO: Depth==0, so use minimax's existing pattern? I don't know.
+    -- Depth==0, so use minimax's existing pattern.
 
 foreachMove_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove maxScore =
     if beta <= alpha then
@@ -336,7 +336,7 @@ foreachMove_max board (move : remMoves) depth isMaxPlayer alpha beta bestMove ma
             newBoard = setCell move chip board
             (_, curScore) = minimax newBoard (depth - 1) (not isMaxPlayer) alpha beta
         in
-            if curScore > maxScore then -- TODO: Perhaps this should be >= rather than just >?
+            if curScore > maxScore then --
                 -- curScore is better, so move is the new bestMove.
                 -- Check the remaining moves.
                 let newAlpha = max alpha curScore
@@ -362,7 +362,7 @@ foreachMove_min _ [] _ _ _ _ bestMove minScore =
 
 foreachMove_min board _ 0 isMaxPlayer alpha beta bestMove minScore =
     minimax board 0 isMaxPlayer alpha beta
-    -- TODO: Depth==0, so use minimax's existing pattern? I don't know.
+    -- Depth==0, so use minimax's existing pattern.
 
 foreachMove_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove minScore =
     if beta <= alpha then
@@ -372,7 +372,7 @@ foreachMove_min board (move : remMoves) depth isMaxPlayer alpha beta bestMove mi
             newBoard = setCell move chip board
             (_, curScore) = minimax newBoard (depth - 1) (not isMaxPlayer) alpha beta
         in
-            if curScore < minScore then  -- TODO: Perhaps this should be <= rather than just <?
+            if curScore < minScore then
                 -- curScore is better, so move is the new bestMove.
                 -- Check the remaining moves.
                 let newBeta = min beta curScore
@@ -410,7 +410,7 @@ minimax board depth isMaxPlayer alpha beta =
                 let chip = if isMaxPlayer then player2Char else player1Char
                     allMoves = getAllPossibleMoves board
                     bigNum = winningScore -- TODO: Just a very big number.
-                    initialBestMove = head allMoves -- TODO: Don't care? Just the first move?
+                    initialBestMove = head allMoves -- Don't care, take the first move.
                 in
                     if isMaxPlayer then
                         foreachMove_max board allMoves depth True alpha beta initialBestMove (-bigNum)
@@ -601,119 +601,3 @@ gameLoop player board difficulty =
                         showBoard board
                         announceWinner outcome
 
-
-
-
-
--- ================================================== TESTS (delete later plz) ==================================================
-{-
-debug_getAlphabetBoard = [["abc", "def", "ghi"], ["jkl", "mno", "pqr"], ["stu", "vwx", "yz#"]]
-
-debug_getAlphabetBoard_LeftRight = [["adg", "jmp", "svy"], ["beh", "knq", "twz"], ["cfi", "lor", "ux#"]]
-debug_getAlphabetBoard_BackForward = [["abc", "jkl", "stu"], ["def", "mno", "vwx"], ["ghi", "pqr", "yz#"]]
-
-
-unitTest_LeftRight =
-    let defaultBoard = debug_getAlphabetBoard
-        leftRight2DBoards = getLeftRightBoards defaultBoard
-    in leftRight2DBoards == debug_getAlphabetBoard_LeftRight
-
-
-unitTest_BackForward =
-    let defaultBoard = debug_getAlphabetBoard
-        backForward2DBoards = getBackForwardBoards defaultBoard
-    in backForward2DBoards == debug_getAlphabetBoard_BackForward
-                           
-
-debug_showBoard board = do
-        putStrLn ""
-        putStr (show board)
-        putStr "\n\n"
-        putStr (toStrBoard board)
-        
-debug_showBoardTranspose board = do
-        putStrLn ""
-        putStr (show (transpose board))
-        putStr "\n\n"
-        putStr (toStrBoard (transpose board))
-
--- some 2D boards
-debug_test2D_1 = (is2Dtictactoe 'X' ["XXX",
-                                     "...",
-                                     "..."]) == 'X'
-                                     
-debug_test2D_2 = (is2Dtictactoe 'X' ["...",
-                                     "XXX",
-                                     "..."]) == 'X'
-
-debug_test2D_3 = (is2Dtictactoe 'X' ["...",
-                                     "...",
-                                     "XXX"]) == 'X'
-
-debug_test2D_4 = (is2Dtictactoe 'X' ["X..",
-                                     "X..",
-                                     "X.."]) == 'X'
-
-
-debug_test2D_5 = (is2Dtictactoe 'X' [".X.",
-                                     ".X.",
-                                     ".X."]) == 'X'
-
-
-debug_test2D_6 = (is2Dtictactoe 'X' ["..X",
-                                     "..X",
-                                     "..X"]) == 'X'
-
-
-debug_test2D_7 = (is2Dtictactoe 'X' ["X..",
-                                     ".X.",
-                                     "..X"]) == 'X'
-
-debug_test2D_8 = (is2Dtictactoe 'X' ["..X",
-                                     ".X.",
-                                     "X.."]) == 'X'
-
-debug_test2D_all = debug_test2D_1 && debug_test2D_2 && debug_test2D_3 && debug_test2D_4 && debug_test2D_5 && debug_test2D_6 && debug_test2D_7 && debug_test2D_8
-
-
-debug_2db2 = ["XXX", "..O", "O.."]
-debug_2db3 = ["X..", ".XO", "O.X"]
-
-debug_whynot1 = let board = initBoard 3
-                    b1 = setCell (1, 1, 1) 'X' board
-                    b2 = setCell (1, 1, 2) 'X' b1
-                    b3 = setCell (1, 1, 3) 'X' b2
-                in is2Dtictactoe_forPlayer1 (getLeftRightBoards b3)
-
-debug_updown1 = let board = initBoard 3
-                    b1 = setCell (1, 1, 2) 'X' board
-                    b2 = setCell (2, 1, 2) 'X' b1
-                    b3 = setCell (3, 1, 2) 'X' b2
-                -- in putStrLn (toStrBoard (getUpDownBoards b3))
-                in is2Dtictactoe_forPlayer1 (getBackForwardBoards b3)
-
-
-debug_leftright1 = let board = initBoard 3
-                       b1 = setCell (1, 1, 1) 'X' board
-                       b2 = setCell (1, 1, 2) 'X' b1
-                       b3 = setCell (1, 1, 3) 'X' b2
-                   -- in putStrLn (toStrBoard (getUpDownBoards b3))
-                   in is2Dtictactoe_forPlayer1 (getBackForwardBoards b3)
-
-
---(49, 49)
-testHeurEmpty = getHeuristicScores (initBoard 3)
-
---(57, 49)
-testHeurMeh = getHeuristicScores (setCell (1,1,2) 'X' (initBoard 3))
-
---(75, 49)
-testHeurMid = getHeuristicScores (setCell (2,2,2) 'X' (initBoard 3))
-
---(63, 49)
-testHeurCorner = getHeuristicScores (setCell (1,1,1) 'X' (initBoard 3))
-
-
-testHeur2 = getHeuristicScores (setCell (2,1,1) 'X' (setCell (1,1,1) 'X' (initBoard 3)))
-testHeur3 = getHeuristicScores (setCell (3,1,1) 'X' (setCell (2,1,1) 'X' (setCell (1,1,1) 'X' (initBoard 3))))
--}
